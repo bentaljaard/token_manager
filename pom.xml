@@ -51,7 +51,7 @@
         <project.scm.id>repo.upc.biz</project.scm.id>
     </properties>
     <scm>
-        <connection>scm:svn:https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager/tags/token_manager-1.0</connection>
+        <connection>scm:svn:https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager</connection>
     </scm>
 
     <distributionManagement>
