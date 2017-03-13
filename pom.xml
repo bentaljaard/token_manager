@@ -50,7 +50,7 @@
         <maven.compiler.target>1.6</maven.compiler.target>
     </properties>
     <scm>
-        <connection>scm:svn:https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager</connection>
+        <connection>scm:svn:https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager/trunk</connection>
     </scm>
 
     <distributionManagement>
