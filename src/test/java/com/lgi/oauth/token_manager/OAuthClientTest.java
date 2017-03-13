@@ -115,20 +115,20 @@ public class OAuthClientTest {
         
     }
     
-    @Test
-    public void testGetTokenClientCredentialsGrant() throws Exception {
-        mock(ClientCredentialsGrant.class);
-        OAuthClient instance = new OAuthClient();
-        Map params = new HashMap();
-        params.put("provider_url", "http://test.com");
-        params.put("grant_type", "client_credentials");
-        params.put("client_id", "test_client");
-        params.put("provider_id", "test_provider");
-        params.put("client_secret", "test_secret");
-        instance.setParams(params);
-        Token result = instance.getToken();
-        
-    }
+//    @Test
+//    public void testGetTokenClientCredentialsGrant() throws Exception {
+//        mock(ClientCredentialsGrant.class);
+//        OAuthClient instance = new OAuthClient();
+//        Map params = new HashMap();
+//        params.put("provider_url", "http://test.com");
+//        params.put("grant_type", "client_credentials");
+//        params.put("client_id", "test_client");
+//        params.put("provider_id", "test_provider");
+//        params.put("client_secret", "test_secret");
+//        instance.setParams(params);
+//        Token result = instance.getToken();
+//        
+//    }
     
     
 

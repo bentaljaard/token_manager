@@ -46,7 +46,7 @@ public class OAuthClient {
             throw new IllegalArgumentException("The grant type needs to be specified when requesting a token");
         }
 
-//        try {
+        try {
             switch (SupportedGrants.valueOf(grantType)) {
                 case client_credentials:
                     grant = new ClientCredentialsGrant();
@@ -59,9 +59,9 @@ public class OAuthClient {
                 default:
                     throw new UnsupportedOperationException("The requested grant is not supported");
             }
-//        } catch (IllegalArgumentException e) {
-//            throw new UnsupportedOperationException("The requested grant is not supported");
-//        }
+        } catch (IllegalArgumentException e) {
+            throw new UnsupportedOperationException("The requested grant is not supported");
+        }
 
         return token;
     }
