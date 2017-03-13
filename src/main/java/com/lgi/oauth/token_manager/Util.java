@@ -25,7 +25,10 @@ public final class Util {
      
     public static Boolean validParameters(Map params, List <String> expected){
         Boolean valid = false;
-        if((params == null || params.isEmpty()) && !expected.isEmpty()){
+        if(params == null || expected == null){
+            return false;
+        }
+        if(params.isEmpty() && !expected.isEmpty()){
             return false;
         }
         
