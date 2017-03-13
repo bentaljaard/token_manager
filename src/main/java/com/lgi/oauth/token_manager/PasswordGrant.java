@@ -102,8 +102,17 @@ public class PasswordGrant implements GrantType {
 
         token.setTokenType("access_token");
 
-        //TODO: What if no expires_in on the returned access token?
-        token.setTTL(Integer.parseInt((String) providerResponse.get("expires_in")));
+        //If no expires_in returned in provider response, use session_duration value from request
+        if(providerResponse.containsKey("expires_in")){
+            token.setTTL(Integer.parseInt((String) providerResponse.get("expires_in")));
+        } else {
+            if(params.containsKey("session_duration")){
+                token.setTTL(Integer.parseInt((String)params.get("session_duration")));
+            } else {
+                throw new IllegalArgumentException("Please set session_duration parameter to determine access token TTL");
+            }
+                
+        }
         token.setProviderResponse(providerResponse);
 
         return token;
@@ -186,8 +195,17 @@ public class PasswordGrant implements GrantType {
         token.setScope((String) params.get("scope"));
         token.setTokenType("access_token");
 
-        //TODO: What if no expires_in on the returned access token?
-        token.setTTL(Integer.parseInt((String) providerResponse.get("expires_in")));
+        //If no expires_in returned in provider response, use session_duration value from request
+        if(providerResponse.containsKey("expires_in")){
+            token.setTTL(Integer.parseInt((String) providerResponse.get("expires_in")));
+        } else {
+            if(params.containsKey("session_duration")){
+                token.setTTL(Integer.parseInt((String)params.get("session_duration")));
+            } else {
+                throw new IllegalArgumentException("Please set session_duration parameter to determine access token TTL");
+            }
+                
+        }
         token.setProviderResponse(providerResponse);
 
         return token;
