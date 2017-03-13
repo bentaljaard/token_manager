@@ -5,18 +5,27 @@
  */
 package com.lgi.oauth.token_manager;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import net.jodah.expiringmap.ExpirationPolicy;
 import net.jodah.expiringmap.ExpiringMap;
+import net.jodah.expiringmap.ExpiringValue;
+import org.apache.http.NameValuePair;
+import org.apache.http.auth.AuthenticationException;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 /**
  *
@@ -218,6 +227,152 @@ public class TokenCacheImplTest {
 
     }
 
+    @Test
+    public void testLoadCacheNullToken() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+
+        //Get access to the token cache
+        TokenCacheImpl instance = new TokenCacheImpl();
+        final Field tokenCache = instance.getClass().getDeclaredField("tokenCache");
+        tokenCache.setAccessible(true);
+
+        //Setup reflection to test the private method
+        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
+        final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
+        loadCache.setAccessible(true);
+
+        //Setup mock objects
+        OAuthClient mockOAuthClient = mock(OAuthClient.class);
+        Provider mockProvider = mock(Provider.class);
+
+        //Setup params
+        String key = "local|test_client_1|null|access_token";
+        Map params = new HashMap();
+        params.put("provider_url", "http://test.com");
+        params.put("provider_id", "local");
+        params.put("grant_type", "client_credentials");
+        params.put("client_id", "test_client_1");
+
+        //Invoke method
+        Object[] parameters = new Object[]{mockOAuthClient, mockProvider, params, key};
+        ExpiringValue result = (ExpiringValue) loadCache.invoke(instance, parameters);
+
+        Object expValue = null;
+        assertEquals(expValue, result.getValue());
+
+//        
+//
+//        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>) tokenCache.get(instance);
+//
+//        Token token = new Token("test_client_1", "local", null, "access_token", 3600L, null);
+//
+////        cache.put("local|test_client_1|null|access_token", token);
+//        cache.put("test_token", token);
+//
+//        //Loaded cache
+//        String key = "test_key";
+//        Map params = new HashMap();
+//        params.put("provider_url", "http://test.com");
+//        params.put("provider_id", "local");
+//        params.put("grant_type", "client_credentials");
+//        params.put("client_id", "test_client_1");
+//
+//        Map err = new HashMap();
+//        err.put("error", "The required parameters for this grant operation was not specified");
+//        Token expResult = new Token("test_client_1", "local", null, "error_token", 0, err);
+//        Token result = instance.getBearerToken(params);
+//        assertEquals(expResult, result);
+    }
+
+    @Test
+    public void testLoadCacheToken() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, AuthenticationException, IOException {
+
+        //Get access to the token cache
+        TokenCacheImpl instance = new TokenCacheImpl();
+
+        //Setup reflection to test the private method
+        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
+        final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
+        loadCache.setAccessible(true);
+
+        //Setup params
+        String key = "local|test_client_1|null|access_token";
+
+        //Setup mock objects
+        OAuthClient mockOAuthClient = mock(OAuthClient.class);
+
+        Map dummyResponse = new HashMap();
+        dummyResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
+        dummyResponse.put("expires_in", "3600");
+        dummyResponse.put("token_type", "Bearer");
+        dummyResponse.put("scope", "read");
+
+        Token token = new Token("test_client_1", "local", null, "access_token", 3600L, dummyResponse);
+
+        when(mockOAuthClient.getToken((Provider) any())).thenReturn(token);
+
+        Provider mockProvider = mock(Provider.class);
+
+        //Invoke method
+        Object[] methodParams = new Object[]{mockOAuthClient, mockProvider, new HashMap(), key};
+        ExpiringValue result = (ExpiringValue) loadCache.invoke(instance, methodParams);
+
+        System.out.println(result.toString());
+        assertEquals(token, result.getValue());
+        assertEquals(null, result.getExpirationPolicy());
+        assertEquals(3600, result.getDuration());
+        assertEquals(TimeUnit.SECONDS, result.getTimeUnit());
+    }
+
+    @Test
+    public void testLoadCacheTokenWithRefresh() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, AuthenticationException, IOException {
+
+        //Get access to the token cache
+        TokenCacheImpl instance = new TokenCacheImpl();
+        final Field tokenCache = instance.getClass().getDeclaredField("tokenCache");
+        tokenCache.setAccessible(true);
+
+        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>) tokenCache.get(instance);
+
+        Map dummyResponse = new HashMap();
+        dummyResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
+        dummyResponse.put("expires_in", "3600");
+        dummyResponse.put("token_type", "Bearer");
+        dummyResponse.put("refresh_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
+        dummyResponse.put("scope", "read");
+
+        Token token = new Token("test_client_1", "local", null, "refresh_token", 3600L, dummyResponse);
+
+        cache.put("local|test_client_1|null|refresh_token", token);
+
+        //Setup reflection to test the private method
+        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
+        final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
+        loadCache.setAccessible(true);
+
+        //Setup params
+        String key = "local|test_client_1|null|access_token";
+
+        //Setup mock objects
+        OAuthClient mockOAuthClient = mock(OAuthClient.class);
+
+        String refreshToken = "a4cf9dee-3ea4-412f-af63-f2bac6faab33";
+        Token newToken = new Token("test_client_1", "local", null, "access_token", 3600L, dummyResponse);
+
+        when(mockOAuthClient.refreshToken((Provider) any(), eq((String)refreshToken))).thenReturn(newToken);
+
+        Provider mockProvider = mock(Provider.class);
+
+        //Invoke method
+        Object[] methodParams = new Object[]{mockOAuthClient, mockProvider, new HashMap(), key};
+        ExpiringValue result = (ExpiringValue) loadCache.invoke(instance, methodParams);
+
+        System.out.println(result.toString());
+//        assertEquals(token, result.getValue());
+//        assertEquals(null, result.getExpirationPolicy());
+//        assertEquals(3600, result.getDuration());
+//        assertEquals(TimeUnit.SECONDS, result.getTimeUnit());
+    }
+
     /**
      * Test of retrieveAndRemoveToken method, of class TokenCacheImpl.
      */
@@ -295,7 +450,7 @@ public class TokenCacheImplTest {
         final Field tokenCache = instance.getClass().getDeclaredField("tokenCache");
         tokenCache.setAccessible(true);
 
-        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>)tokenCache.get(instance);
+        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>) tokenCache.get(instance);
 
         Token token = new Token("test_client_1", "local", null, "access_token", 3600L, null);
 
@@ -321,7 +476,7 @@ public class TokenCacheImplTest {
         TokenCacheImpl instance = new TokenCacheImpl();
         final Field tokenCache = instance.getClass().getDeclaredField("tokenCache");
         tokenCache.setAccessible(true);
-        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>)tokenCache.get(instance);
+        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>) tokenCache.get(instance);
         Token token = new Token("test_client_1", "local", null, "access_token", 3600L, null);
         cache.put("test_key", token);
         assertFalse(cache.isEmpty());
@@ -347,7 +502,7 @@ public class TokenCacheImplTest {
         TokenCacheImpl instance = new TokenCacheImpl();
         final Field tokenCache = instance.getClass().getDeclaredField("tokenCache");
         tokenCache.setAccessible(true);
-        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>)tokenCache.get(instance);
+        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>) tokenCache.get(instance);
         Token token = new Token("test_client_1", "local", null, "access_token", 3600L, null);
         cache.put("test_key", token);
         String expResult = "{test_key=clientID: test_client_1, providerID: local, scope: null, tokenType: access_token, ttl: 3600, providerResponse: null}";
@@ -367,7 +522,7 @@ public class TokenCacheImplTest {
         final Field tokenCache = instance.getClass().getDeclaredField("tokenCache");
         tokenCache.setAccessible(true);
 
-        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>)tokenCache.get(instance);
+        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>) tokenCache.get(instance);
 
         Token token = new Token("test_client_1", "local", null, "access_token", 3600L, null);
 
@@ -388,7 +543,7 @@ public class TokenCacheImplTest {
         final Field tokenCache = instance.getClass().getDeclaredField("tokenCache");
         tokenCache.setAccessible(true);
 
-        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>)tokenCache.get(instance);
+        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>) tokenCache.get(instance);
 
         Token token = new Token("test_client_1", "local", null, "access_token", 3600L, null);
 
@@ -397,7 +552,6 @@ public class TokenCacheImplTest {
         cache.put(key, token, ExpirationPolicy.ACCESSED, token.getTTL(), TimeUnit.SECONDS);
 
         //check that it was added
-       
         assertTrue(cache.getExpiration(key) <= 3600000);
 
         Token newToken = new Token("test_client_1", "local", null, "access_token", 4000L, null);
@@ -422,7 +576,7 @@ public class TokenCacheImplTest {
         final Field tokenCache = instance.getClass().getDeclaredField("tokenCache");
         tokenCache.setAccessible(true);
 
-        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>)tokenCache.get(instance);
+        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>) tokenCache.get(instance);
 
         Token token = new Token("test_client_1", "local", null, "access_token", 3600L, null);
 

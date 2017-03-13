@@ -36,7 +36,7 @@
             <scope>test</scope>
             <type>jar</type>
         </dependency>
-         <dependency>
+        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>2.7.14</version>
@@ -49,27 +49,49 @@
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
     </properties>
+    <scm>
+        <connection>scm:svn:https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager</connection>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>artifact-repository</id>
+            <url>http://amspnxspe00.cioio.net:8081/nexus/content/repositories</url>
+        </repository>
+    </distributionManagement>
     <build>
-    <plugins>
-        <plugin>
-            <groupId>org.jacoco</groupId>
-            <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.7.9</version>
-            <executions>
-                <execution>
-                    <goals>
-                        <goal>prepare-agent</goal>
-                    </goals>
-                </execution>
-                <execution>
-                    <id>report</id>
-                    <phase>prepare-package</phase>
-                    <goals>
-                        <goal>report</goal>
-                    </goals>
-                </execution>
-            </executions>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.7.9</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>versions-maven-plugin</artifactId>
+            <version>2.3</version>
         </plugin>
-    </plugins>
-</build>
+        <plugin>
+            <artifactId>maven-scm-plugin</artifactId>
+            <version>1.9.5</version>
+            <configuration>
+                <tag>${project.artifactId}-${project.version}</tag>
+            </configuration>
+        </plugin>
+        </plugins>
+    </build>
 </project>
