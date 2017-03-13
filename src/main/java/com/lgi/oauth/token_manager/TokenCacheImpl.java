@@ -43,7 +43,16 @@ public class TokenCacheImpl implements TokenCache {
             public ExpiringValue<Token> load(String k) {
                 Token token = null;
                 Token refreshToken = null;
-                OAuthClient client = new OAuthClient(params);
+                OAuthClient client = null;
+                Provider provider = new Provider((String) params.get("provider_url"), (String) params.get("provider_id"));
+                if (params.get("grant_type").equals("client_credentials")) {
+                    client = new OAuthClient(params, new ClientCredentialsGrant());
+                } else {
+                    if (params.get("grant_type").equals("password")) {
+                        client = new OAuthClient(params, new PasswordGrant());
+                    }
+                }
+
                 //Does a refresh token exist in the cache
                 String refreshTokenKey = k.substring(0, k.lastIndexOf("|")) + "|refresh_token";
                 if (containsToken(refreshTokenKey)) {
@@ -52,7 +61,7 @@ public class TokenCacheImpl implements TokenCache {
                     //get refresh token from cache
                     refreshToken = retrieveToken(refreshTokenKey);
                     try {
-                        token = client.refreshToken((String) refreshToken.getProviderResponse().get("refresh_token"));
+                        token = client.refreshToken(provider, (String) refreshToken.getProviderResponse().get("refresh_token"));
                         logger.log(Level.INFO, "Got new access token from provider using refresh token");
                     } catch (Exception ex) {
                         logger.log(Level.SEVERE, null, ex);
@@ -61,8 +70,8 @@ public class TokenCacheImpl implements TokenCache {
                 } else {
                     //Authenticate to get new access token
                     try {
-                        token = (Token)client.getToken();
-                        if(token == null){
+                        token = (Token) client.getToken(provider);
+                        if (token == null) {
                             throw new Exception("Token returned is null");
                         }
                         logger.log(Level.INFO, "Got new access token from provider1");
@@ -99,7 +108,7 @@ public class TokenCacheImpl implements TokenCache {
                         refreshToken.setProviderID(token.getProviderID());
                         refreshToken.setScope(token.getScope());
 //                        refreshToken.setTTL(((Number) params.get("refresh_token_ttl")).longValue());
-                        refreshToken.setTTL(Integer.parseInt((String)params.get("refresh_token_ttl")));
+                        refreshToken.setTTL(Integer.parseInt((String) params.get("refresh_token_ttl")));
                         refreshToken.setTokenType("refresh_token");
                         refreshToken.setProviderResponse(token.getProviderResponse());
                         cacheToken(refreshToken);
@@ -146,7 +155,7 @@ public class TokenCacheImpl implements TokenCache {
         this.params = params;
         Token token = retrieveToken((String) params.get("provider_id") + "|" + (String) params.get("client_id") + "|" + (String) params.get("scope") + "|access_token");
         if (token == null) {
-             logger.log(Level.INFO, error.toString());
+            logger.log(Level.INFO, error.toString());
             Token errorToken = new Token();
             errorToken.setClientID((String) params.get("client_id"));
             errorToken.setProviderID((String) params.get("provider_id"));
@@ -226,7 +235,7 @@ public class TokenCacheImpl implements TokenCache {
     public String getTokenExpiryTimes() {
         String result = "";
         for (Map.Entry<String, Token> entry : tokenCache.entrySet()) {
-            result+=(entry.getKey() + "(" + getTokenExpiry(entry.getKey()) + ")");
+            result += (entry.getKey() + "(" + getTokenExpiry(entry.getKey()) + ")");
         }
         return result;
     }

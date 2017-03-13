@@ -9,11 +9,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.auth.AuthenticationException;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -25,16 +28,38 @@ import org.apache.http.impl.client.HttpClientBuilder;
  *
  * @author btaljaard
  */
-public class HTTPRequest {
-    
-    private final String USER_AGENT = "Mozilla/5.0";
-    private static final Logger logger = Logger.getLogger(HTTPRequest.class.getName());
+public class Provider {
 
-    public HTTPRequest() {
-        super();
+    private String url;
+    private String providerID;
+    private static final Logger logger = Logger.getLogger(Provider.class.getName());
+    private final String USER_AGENT = "Mozilla/5.0";
+
+//    request ;
+//    response ;
+
+    public Provider(String url, String providerID) {
+        this.url = url;
+        this.providerID = providerID;
     }
 
-    public String post(String url, List<NameValuePair> headers, List<NameValuePair> urlParameters, UsernamePasswordCredentials credentials) throws Exception{
+    public String getURL() {
+        return this.url;
+    }
+
+    public String getID() {
+        return this.providerID;
+    }
+
+    public void setURL(String url) {
+        this.url = url;
+    }
+
+    public void setID(String id) {
+        this.providerID = id;
+    }
+
+    public Map getResponse(List<NameValuePair> headers, List<NameValuePair> urlParameters, UsernamePasswordCredentials credentials) throws AuthenticationException, IOException {
         // Create HTTP client
         HttpClient client = HttpClientBuilder.create()
                 .build();
@@ -43,13 +68,13 @@ public class HTTPRequest {
 
         //set all headers
         post.setHeader("User-Agent", USER_AGENT);
-        
-        for(NameValuePair header: headers){
+
+        for (NameValuePair header : headers) {
             post.addHeader(header.getName(), header.getValue());
         }
-        
+
         //Set basic auth credentials if required
-        if(credentials != null){
+        if (credentials != null) {
             post.addHeader(new BasicScheme().authenticate(credentials, post, null));
         }
 
@@ -89,8 +114,10 @@ public class HTTPRequest {
             throw ex;
         }
 
-        logger.log(Level.INFO,"Received the following result {0}", result.toString());
-        return result.toString();
+        logger.log(Level.INFO, "Received the following result {0}", result.toString());
+        
+        return Util.jsonToMap(result.toString());
+
     }
 
 }

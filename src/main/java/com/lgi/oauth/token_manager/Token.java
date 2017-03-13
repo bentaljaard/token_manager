@@ -13,6 +13,12 @@ public class Token {
 
     public Token() {
         super();
+//        this.clientID = "";
+//        this.providerID = "";
+//        this.scope = "";
+//        this.tokenType = "";
+//        this.ttl = 0L;
+//        this.providerResponse = null;
     }
 
     public Token(String clientID, String providerID, String scope, String tokenType, long ttl, Map providerResponse) {
@@ -82,6 +88,53 @@ public class Token {
             return "clientID: " + this.clientID + ", providerID: " + this.providerID + ", scope: " + this.scope + ", tokenType: " + this.tokenType + ", ttl: " + this.ttl + ", providerResponse: " + this.providerResponse.toString();
 
         }
+    }
+    
+
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 67 * hash + (this.clientID != null ? this.clientID.hashCode() : 0);
+        hash = 67 * hash + (this.tokenType != null ? this.tokenType.hashCode() : 0);
+        hash = 67 * hash + (this.providerID != null ? this.providerID.hashCode() : 0);
+        hash = 67 * hash + (this.scope != null ? this.scope.hashCode() : 0);
+        hash = 67 * hash + (int) (this.ttl ^ (this.ttl >>> 32));
+        hash = 67 * hash + (this.providerResponse != null ? this.providerResponse.hashCode() : 0);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Token other = (Token) obj;
+        if (this.ttl != other.ttl) {
+            return false;
+        }
+        if ((this.clientID == null) ? (other.clientID != null) : !this.clientID.equals(other.clientID)) {
+            return false;
+        }
+        if ((this.tokenType == null) ? (other.tokenType != null) : !this.tokenType.equals(other.tokenType)) {
+            return false;
+        }
+        if ((this.providerID == null) ? (other.providerID != null) : !this.providerID.equals(other.providerID)) {
+            return false;
+        }
+        if ((this.scope == null) ? (other.scope != null) : !this.scope.equals(other.scope)) {
+            return false;
+        }
+        if (this.providerResponse != other.providerResponse && (this.providerResponse == null || !this.providerResponse.equals(other.providerResponse))) {
+            return false;
+        }
+        return true;
     }
 
 }

@@ -5,6 +5,7 @@
  */
 package com.lgi.oauth.token_manager;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -12,8 +13,19 @@ import java.util.Map;
  * @author btaljaard
  */
 public interface GrantType {
-    public Token authenticate(Map params) throws Exception;
     
-    public Token refresh(Map params, String refreshToken) throws Exception;
+    public String getType();
+    
+    public List<String> getSupportedOperations();
+    
+    public Boolean validParameters(Map params);
+    
+    public List<String> getMinimumGrantParameters();
+    
+//    public List<String> getGrantParameters();
+        
+//    public Token authenticate(Map params) throws Exception;
+//    
+//    public Token refresh(Map params, String refreshToken) throws Exception;
     
 }

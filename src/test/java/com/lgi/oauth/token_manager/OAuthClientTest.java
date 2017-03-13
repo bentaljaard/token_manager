@@ -5,9 +5,13 @@
  */
 package com.lgi.oauth.token_manager;
 
-import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.apache.http.NameValuePair;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.message.BasicNameValuePair;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -16,135 +20,242 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+
 /**
  *
  * @author btaljaard
  */
 public class OAuthClientTest {
-    
+
     public OAuthClientTest() {
     }
-    
+
     @BeforeClass
     public static void setUpClass() {
     }
-    
+
     @AfterClass
     public static void tearDownClass() {
     }
-    
+
     @Before
     public void setUp() {
     }
-    
+
     @After
     public void tearDown() {
     }
-    
-    @Test
-    public void testDefaultConstructor() throws NoSuchFieldException, IllegalAccessException{
-        OAuthClient instance = new OAuthClient();
-        final Field params = instance.getClass().getDeclaredField("params");
-        params.setAccessible(true);
-        assertEquals("Fields didn't match", params.get(instance), null);
-    }
-    
-    @Test
-    public void testValueConstructor() throws NoSuchFieldException, IllegalAccessException{
-        Map param_values = new HashMap();
-        param_values.put("testkey", "testvalue");
-        OAuthClient instance = new OAuthClient(param_values);
-        final Field params = instance.getClass().getDeclaredField("params");
-        params.setAccessible(true);
-        assertEquals("Fields didn't match", params.get(instance), param_values);
-    }
-
-    /**
-     * Test of setParams method, of class OAuthClient.
-     */
-    @Test
-    public void testSetParams() throws IllegalAccessException, NoSuchFieldException {
-
-        Map param_values = new HashMap();
-        param_values.put("provider_id", "test_provider");
-        OAuthClient instance = new OAuthClient();
-        instance.setParams(param_values);
-        
-        final Field params = instance.getClass().getDeclaredField("params");
-        params.setAccessible(true);
-        assertEquals("Fields didn't match", params.get(instance), param_values);
-        
-    }
-
-    /**
-     * Test of getParams method, of class OAuthClient.
-     */
-    @Test
-    public void testGetParams() throws IllegalAccessException, NoSuchFieldException {
-        OAuthClient instance = new OAuthClient();
-        Map param_values = new HashMap();
-        param_values.put("provider_id", "test_provider");
-       
-        final Field params = instance.getClass().getDeclaredField("params");
-        params.setAccessible(true);
-        params.set(instance, param_values);
-        
-        Map result = instance.getParams();
-        
-        assertEquals("Fields didn't match", result, param_values);
-
-    }
-
-    /**
-     * Test of getToken method, of class OAuthClient.
-     */
-    @Test(expected = IllegalArgumentException.class)
-    public void testGetTokenNoGrant() throws Exception {
-        OAuthClient instance = new OAuthClient();
-        Token result = instance.getToken();
-        
-    }
-    
-    @Test(expected = UnsupportedOperationException.class)
-    public void testGetTokenInvalidGrant() throws Exception {
-        OAuthClient instance = new OAuthClient();
-        Map params = new HashMap();
-        params.put("grant_type", "test_grant");
-        instance.setParams(params);
-        Token result = instance.getToken();
-        
-    }
-    
+//
+//    /**
+//     * Test of setParams method, of class OAuthClient.
+//     */
 //    @Test
-//    public void testGetTokenClientCredentialsGrant() throws Exception {
-//        mock(ClientCredentialsGrant.class);
-//        OAuthClient instance = new OAuthClient();
-//        Map params = new HashMap();
-//        params.put("provider_url", "http://test.com");
-//        params.put("grant_type", "client_credentials");
-//        params.put("client_id", "test_client");
-//        params.put("provider_id", "test_provider");
-//        params.put("client_secret", "test_secret");
+//    public void testSetParams() {
+//        System.out.println("setParams");
+//        Map params = null;
+//        OAuthClient instance = null;
 //        instance.setParams(params);
-//        Token result = instance.getToken();
-//        
+//        // TODO review the generated test code and remove the default call to fail.
+//        fail("The test case is a prototype.");
 //    }
-    
-    
-
-    /**
-     * Test of refreshToken method, of class OAuthClient.
-     */
+//
+//    /**
+//     * Test of setGrant method, of class OAuthClient.
+//     */
 //    @Test
-//    public void testRefreshToken() throws Exception {
-//        System.out.println("refreshToken");
-//        String refreshToken = "";
-//        OAuthClient instance = new OAuthClient();
-//        Token expResult = null;
-//        Token result = instance.refreshToken(refreshToken);
+//    public void testSetGrant() {
+//        System.out.println("setGrant");
+//        GrantType grant = null;
+//        OAuthClient instance = null;
+//        instance.setGrant(grant);
+//        // TODO review the generated test code and remove the default call to fail.
+//        fail("The test case is a prototype.");
+//    }
+//
+//    /**
+//     * Test of getParams method, of class OAuthClient.
+//     */
+//    @Test
+//    public void testGetParams() {
+//        System.out.println("getParams");
+//        OAuthClient instance = null;
+//        Map expResult = null;
+//        Map result = instance.getParams();
 //        assertEquals(expResult, result);
 //        // TODO review the generated test code and remove the default call to fail.
 //        fail("The test case is a prototype.");
 //    }
+//
+//    /**
+//     * Test of getGrant method, of class OAuthClient.
+//     */
+//    @Test
+//    public void testGetGrant() {
+//        System.out.println("getGrant");
+//        OAuthClient instance = null;
+//        GrantType expResult = null;
+//        GrantType result = instance.getGrant();
+//        assertEquals(expResult, result);
+//        // TODO review the generated test code and remove the default call to fail.
+//        fail("The test case is a prototype.");
+//    }
+
+    /**
+     * Test of getToken method, of class OAuthClient.
+     */
+    @Test
+    public void testGetTokenBasicAuth() throws Exception {
+        System.out.println("getToken");
+        
+        Map params = new HashMap();
+        params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
+        params.put("grant_type", "client_credentials");
+        params.put("client_id", "test_client_1");
+        params.put("provider_id", "local");
+        params.put("client_secret", "test_secret");
+        params.put("basic_username", "test_client_1");
+        params.put("basic_password", "test_secret");
+
+        Provider provider = mock(Provider.class);
+        Map dummyResponse = new HashMap();
+        dummyResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
+        dummyResponse.put("expires_in", "3600");
+        dummyResponse.put("token_type", "Bearer");
+        dummyResponse.put("scope", "read");
+        
+        when(provider.getResponse((List<NameValuePair>)(List<?>)anyList(), (List<NameValuePair>)(List<?>)anyList(), (UsernamePasswordCredentials)any())).thenReturn(dummyResponse);
+
+        OAuthClient instance = new OAuthClient(params, new ClientCredentialsGrant());
+        
+        Token expResult = new Token("test_client_1", "local", null, "access_token", 3600L, dummyResponse);
+        
+        Token result = instance.getToken(provider);
+        
+        // Verify request to provider
+        
+        List<NameValuePair> headers = new ArrayList<NameValuePair>();
+        List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+        
+        urlParameters.add(new BasicNameValuePair("grant_type", "client_credentials"));
+        
+        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("test_client_1", "test_secret");
+        verify(provider).getResponse(headers, urlParameters, credentials);
+        
+        // Verify token response
+        assertEquals(expResult,result);
+  
+
+    }
     
+    @Test
+    public void testGetTokenClientCredentials() throws Exception {
+        System.out.println("getToken");
+        
+        Map params = new HashMap();
+        params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
+        params.put("grant_type", "client_credentials");
+        params.put("client_id", "test_client_1");
+        params.put("provider_id", "local");
+        params.put("client_secret", "test_secret");
+       // params.put("basic_username", "test_client_1");
+       // params.put("basic_password", "test_secret");
+
+        Provider provider = mock(Provider.class);
+        Map dummyResponse = new HashMap();
+        dummyResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
+        dummyResponse.put("expires_in", "3600");
+        dummyResponse.put("token_type", "Bearer");
+        dummyResponse.put("scope", "read");
+        
+        when(provider.getResponse((List<NameValuePair>)(List<?>)anyList(), (List<NameValuePair>)(List<?>)anyList(), (UsernamePasswordCredentials)any())).thenReturn(dummyResponse);
+
+        OAuthClient instance = new OAuthClient(params, new ClientCredentialsGrant());
+        
+        Token expResult = new Token("test_client_1", "local", null, "access_token", 3600L, dummyResponse);
+        
+        Token result = instance.getToken(provider);
+        
+        // Verify request to provider
+        
+        List<NameValuePair> headers = new ArrayList<NameValuePair>();
+        List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+        
+        urlParameters.add(new BasicNameValuePair("grant_type", "client_credentials"));
+        urlParameters.add(new BasicNameValuePair("client_id", "test_client_1"));
+        urlParameters.add(new BasicNameValuePair("client_secret", "test_secret"));
+        
+//        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("test_client_1", "test_secret");
+        UsernamePasswordCredentials credentials = null;
+        verify(provider).getResponse(headers, urlParameters, credentials);
+        
+        // Verify token response
+        assertEquals(expResult,result);
+  
+
+    }
+    
+    @Test
+    public void testGetTokenwithScope() throws Exception {
+        System.out.println("getToken");
+        
+        Map params = new HashMap();
+        params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
+        params.put("grant_type", "client_credentials");
+        params.put("client_id", "test_client_1");
+        params.put("provider_id", "local");
+        params.put("client_secret", "test_secret");
+        params.put("scope", "read_write");
+       // params.put("basic_username", "test_client_1");
+       // params.put("basic_password", "test_secret");
+
+        Provider provider = mock(Provider.class);
+        Map dummyResponse = new HashMap();
+        dummyResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
+        dummyResponse.put("expires_in", "3600");
+        dummyResponse.put("token_type", "Bearer");
+        dummyResponse.put("scope", "read");
+        
+        when(provider.getResponse((List<NameValuePair>)(List<?>)anyList(), (List<NameValuePair>)(List<?>)anyList(), (UsernamePasswordCredentials)any())).thenReturn(dummyResponse);
+
+        OAuthClient instance = new OAuthClient(params, new ClientCredentialsGrant());
+        
+        Token expResult = new Token("test_client_1", "local", "read_write", "access_token", 3600L, dummyResponse);
+        
+        Token result = instance.getToken(provider);
+        
+        // Verify request to provider
+        
+        List<NameValuePair> headers = new ArrayList<NameValuePair>();
+        List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+        
+        urlParameters.add(new BasicNameValuePair("grant_type", "client_credentials"));
+        urlParameters.add(new BasicNameValuePair("client_id", "test_client_1"));
+        urlParameters.add(new BasicNameValuePair("client_secret", "test_secret"));
+        urlParameters.add(new BasicNameValuePair("scope", "read_write"));
+        
+//        UsernamePasswordCredentials credentials = new UsernamePasswordCredentials("test_client_1", "test_secret");
+        UsernamePasswordCredentials credentials = null;
+        verify(provider).getResponse(headers, urlParameters, credentials);
+        
+        // Verify token response
+        assertEquals(expResult,result);
+  
+
+    }
+
+//    /**
+//     * Test of refreshToken method, of class OAuthClient.
+//     */
+//    @Test
+//    public void testRefreshToken() throws Exception {
+//        System.out.println("refreshToken");
+//        Provider provider = null;
+//        String refreshToken = "";
+//        OAuthClient instance = null;
+//        Token expResult = null;
+//        Token result = instance.refreshToken(provider, refreshToken);
+//        assertEquals(expResult, result);
+//        // TODO review the generated test code and remove the default call to fail.
+//        fail("The test case is a prototype.");
+//    }
 }
