@@ -51,109 +51,104 @@ public class TokenManager {
         try {
 
             
-            params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
-            params.put("grant_type", "client_credentials");
-            params.put("client_id", "test_client_1");
-            params.put("provider_id", "local");
-            params.put("client_secret", "test_secret");
-            params.put("basic_username", "test_client_1");
-            params.put("basic_password", "test_secret");
+            
+            
 
             token = tm.getBearerToken(params);
             
             System.out.println(token.toString());
             
-//            Thread.sleep(5000);
-            
-            token = tm.getBearerToken(params);
-            
-            System.out.println(token.toString());
-            
-            
-            params.clear();
-            
-            params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
-            params.put("grant_type", "password");
-            params.put("client_id", "test_client_2");
-            params.put("provider_id", "local");
-            params.put("username", "test@user");
-            params.put("password", "test_password");
-            params.put("basic_username", "test_client_1");
-            params.put("basic_password", "test_secret");
-            params.put("refresh_token_ttl", "5000");
-            
-            token = tm.getBearerToken(params);
-            
-            System.out.println(token.toString());
-//             Thread.sleep(5000);
-            
-            token = tm.getBearerToken(params);
-            
-            System.out.println(token.toString());
-            
-            
-            
-            params.clear();
-            
-            params.put("provider_url", "http://localhost:8080/v1/oauth/tokens"); 
-            params.put("grant_type", "client_credentials");
-            params.put("client_id", "test_client_1");
-            params.put("provider_id", "local");
-            params.put("client_secret", "test_secret");
-            params.put("basic_username", "test_client_1");
-            params.put("basic_password", "test_secret");
-
-            token = tm.getBearerToken(params);
-            
-            System.out.println(token.toString());
-            
-            
-            
-            Thread.sleep(10000);
-
-            params.clear();
-            
-            params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
-            params.put("grant_type", "password");
-            params.put("client_id", "test_client_2");
-            params.put("provider_id", "local");
-            params.put("username", "test@user");
-            params.put("password", "test_password");
-            params.put("basic_username", "test_client_1");
-            params.put("basic_password", "test_secret");
-            params.put("refresh_token_ttl", "5000");
-            
-            token = tm.getBearerToken(params);
-            
-            System.out.println(token.toString());
-            
-            params.clear();
-            
-            params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
-            params.put("grant_type", "password");
-            params.put("client_id", "test_client_2");
-            params.put("provider_id", "local");
-            params.put("username", "test@user");
-            params.put("password", "test_password");
-            params.put("basic_username", "test_client_1");
-            params.put("basic_password", "test_secret");
-            params.put("refresh_token_ttl", "5000");
-            params.put("scope","read_write");
-            
-            token = tm.getBearerToken(params);
-            
-            System.out.println(token.toString());
-            
-            
-            System.out.println(tm.getTokenCache().toString());
-            
-            TokenCache cache = tm.getTokenCache();
-            
-            System.out.print(cache.getTokenExpiryTimes());
-            
-            tm.clearTokenCache();
-            System.out.println(tm.getTokenCache().toString());
-            
+////            Thread.sleep(5000);
+//            
+//            token = tm.getBearerToken(params);
+//            
+//            System.out.println(token.toString());
+//            
+//            
+//            params.clear();
+//            
+//            params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
+//            params.put("grant_type", "password");
+//            params.put("client_id", "test_client_2");
+//            params.put("provider_id", "local");
+//            params.put("username", "test@user");
+//            params.put("password", "test_password");
+//            params.put("basic_username", "test_client_1");
+//            params.put("basic_password", "test_secret");
+//            params.put("refresh_token_ttl", "5000");
+//            
+//            token = tm.getBearerToken(params);
+//            
+//            System.out.println(token.toString());
+////             Thread.sleep(5000);
+//            
+//            token = tm.getBearerToken(params);
+//            
+//            System.out.println(token.toString());
+//            
+//            
+//            
+//            params.clear();
+//            
+//            params.put("provider_url", "http://localhost:8080/v1/oauth/tokens"); 
+//            params.put("grant_type", "client_credentials");
+//            params.put("client_id", "test_client_1");
+//            params.put("provider_id", "local");
+//            params.put("client_secret", "test_secret");
+//            params.put("basic_username", "test_client_1");
+//            params.put("basic_password", "test_secret");
+//
+//            token = tm.getBearerToken(params);
+//            
+//            System.out.println(token.toString());
+//            
+//            
+//            
+//            Thread.sleep(10000);
+//
+//            params.clear();
+//            
+//            params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
+//            params.put("grant_type", "password");
+//            params.put("client_id", "test_client_2");
+//            params.put("provider_id", "local");
+//            params.put("username", "test@user");
+//            params.put("password", "test_password");
+//            params.put("basic_username", "test_client_1");
+//            params.put("basic_password", "test_secret");
+//            params.put("refresh_token_ttl", "5000");
+//            
+//            token = tm.getBearerToken(params);
+//            
+//            System.out.println(token.toString());
+//            
+//            params.clear();
+//            
+//            params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
+//            params.put("grant_type", "password");
+//            params.put("client_id", "test_client_2");
+//            params.put("provider_id", "local");
+//            params.put("username", "test@user");
+//            params.put("password", "test_password");
+//            params.put("basic_username", "test_client_1");
+//            params.put("basic_password", "test_secret");
+//            params.put("refresh_token_ttl", "5000");
+//            params.put("scope","read_write");
+//            
+//            token = tm.getBearerToken(params);
+//            
+//            System.out.println(token.toString());
+//            
+//            
+//            System.out.println(tm.getTokenCache().toString());
+//            
+//            TokenCache cache = tm.getTokenCache();
+//            
+//            System.out.print(cache.getTokenExpiryTimes());
+//            
+//            tm.clearTokenCache();
+//            System.out.println(tm.getTokenCache().toString());
+//            
             
 
 

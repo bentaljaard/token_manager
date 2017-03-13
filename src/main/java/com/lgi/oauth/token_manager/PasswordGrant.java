@@ -17,7 +17,7 @@ public class PasswordGrant implements GrantType {
 
     private static final String GRANT_TYPE="password";
     private static final ImmutableList<String> SUPPORTED_OPERATIONS = ImmutableList.of("authenticate","refresh");
-    private static final ImmutableList<String> REQUIRED_PARAMETERS = ImmutableList.of("provider_url", "provider_id", "grant_type", "client_id");
+//    private static final ImmutableList<String> REQUIRED_PARAMETERS = ImmutableList.of("provider_url", "provider_id", "grant_type", "client_id");
     private static final ImmutableList<String> MINIMUM_GRANT_PARAMETERS = ImmutableList.of("grant_type","username","password");
 
     private static final ImmutableList<String> CLIENT_AUTH_PARAMETERS = ImmutableList.of("client_id", "client_secret");

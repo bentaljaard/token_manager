@@ -79,6 +79,14 @@ public class Token {
     public void setProviderResponse(Map response) {
         this.providerResponse = response;
     }
+    
+    public String getTokenCacheKey(){
+        return providerID + "|" + clientID + "|" + scope + "|" + tokenType;
+    }
+    
+    public String getTokenCacheKeyPrefix(){
+        return providerID + "|" + clientID + "|" + scope;
+    }
 
     @Override
     public String toString() {
@@ -90,7 +98,7 @@ public class Token {
         }
     }
     
-
+    
 
     @Override
     public int hashCode() {

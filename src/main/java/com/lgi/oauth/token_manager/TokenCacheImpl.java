@@ -5,6 +5,8 @@
  */
 package com.lgi.oauth.token_manager;
 
+import static com.lgi.oauth.token_manager.GrantType.REQUIRED_PARAMETERS;
+import static com.lgi.oauth.token_manager.GrantType.SUPPORTED_GRANTS;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -41,17 +43,29 @@ public class TokenCacheImpl implements TokenCache {
         ExpiringEntryLoader<String, Token> entryLoader = new ExpiringEntryLoader<String, Token>() {
             @Override
             public ExpiringValue<Token> load(String k) {
+                //Already verified that minimum parameters are provided 
                 Token token = null;
                 Token refreshToken = null;
-                OAuthClient client = null;
+                OAuthClient client;
+                GrantType grant = null;
+
+                //Create new provider                
                 Provider provider = new Provider((String) params.get("provider_url"), (String) params.get("provider_id"));
-                if (params.get("grant_type").equals("client_credentials")) {
-                    client = new OAuthClient(params, new ClientCredentialsGrant());
+
+                if (SUPPORTED_GRANTS.contains(params.get("grant_type"))) {
+                    GrantFactory gf = new GrantFactory();
+                    grant = gf.getGrant((String) params.get("grant_type"));
                 } else {
-                    if (params.get("grant_type").equals("password")) {
-                        client = new OAuthClient(params, new PasswordGrant());
-                    }
+                    //set error and exit
+                    error = new HashMap();
+                    error.put("error", "Grant Type is not supported");
+                    //map can store null, so expire entry immediately
+                    return new ExpiringValue(null, 0, TimeUnit.SECONDS);
                 }
+
+                client = new OAuthClient(params, grant);
+                
+                
 
                 //Does a refresh token exist in the cache
                 String refreshTokenKey = k.substring(0, k.lastIndexOf("|")) + "|refresh_token";
@@ -65,7 +79,10 @@ public class TokenCacheImpl implements TokenCache {
                         logger.log(Level.INFO, "Got new access token from provider using refresh token");
                     } catch (Exception ex) {
                         logger.log(Level.SEVERE, null, ex);
-                        ex.printStackTrace();
+                        error = new HashMap();
+                        error.put("error", ex.getMessage());
+                        //map can store null, so expire entry immediately
+                        return new ExpiringValue(null, 0, TimeUnit.SECONDS);
                     }
                 } else {
                     //Authenticate to get new access token
@@ -107,7 +124,6 @@ public class TokenCacheImpl implements TokenCache {
                         refreshToken.setClientID(token.getClientID());
                         refreshToken.setProviderID(token.getProviderID());
                         refreshToken.setScope(token.getScope());
-//                        refreshToken.setTTL(((Number) params.get("refresh_token_ttl")).longValue());
                         refreshToken.setTTL(Integer.parseInt((String) params.get("refresh_token_ttl")));
                         refreshToken.setTokenType("refresh_token");
                         refreshToken.setProviderResponse(token.getProviderResponse());
@@ -115,8 +131,7 @@ public class TokenCacheImpl implements TokenCache {
                     }
 
                 }
-
-                return new ExpiringValue(token, 4, TimeUnit.SECONDS);
+                return new ExpiringValue(token, token.getTTL(), TimeUnit.SECONDS);
             }
 
         };
@@ -126,14 +141,17 @@ public class TokenCacheImpl implements TokenCache {
                 .variableExpiration()
                 .build();
     }
+    
+//    private Token cacheLoader(OAuthClient client, Map params, String key){
+//        
+//    }
 
     @Override
     public void cacheToken(Token token) {
         if (token == null) {
             return;
         }
-        String key = token.getProviderID() + "|" + token.getClientID() + "|" + token.getScope() + "|" + token.getTokenType();
-        tokenCache.put(key, token, ExpirationPolicy.ACCESSED, token.getTTL(), TimeUnit.SECONDS);
+        tokenCache.put(token.getTokenCacheKey(), token, ExpirationPolicy.ACCESSED, token.getTTL(), TimeUnit.SECONDS);
     }
 
     @Override
@@ -152,20 +170,46 @@ public class TokenCacheImpl implements TokenCache {
 
     @Override
     public Token getBearerToken(Map params) {
-        this.params = params;
-        Token token = retrieveToken((String) params.get("provider_id") + "|" + (String) params.get("client_id") + "|" + (String) params.get("scope") + "|access_token");
-        if (token == null) {
+        Token errorToken;
+        //Check if we have valid parameters to interact with the cache
+        if (validParameters(params)) {
+            this.params = params;
+        } else {
+            errorToken = new Token();
+            errorToken.setTokenType("error_token");
+            error = new HashMap();
+            error.put("error", "Not all required parameters provided to get a token");
+            errorToken.setProviderResponse(error);
+            return errorToken;
+        }
+
+        Token token = retrieveToken(getTokenCacheKeyPrefix(params) + "|access_token");
+        if(token == null && error == null){
+            error = new HashMap();
+            error.put("error", "Could not retrieve token from provider");
+        }
+        
+        if (error != null) {
             logger.log(Level.INFO, error.toString());
-            Token errorToken = new Token();
+            errorToken = new Token();
             errorToken.setClientID((String) params.get("client_id"));
             errorToken.setProviderID((String) params.get("provider_id"));
-            errorToken.setTokenType("error");
+            errorToken.setTokenType("error_token");
             errorToken.setProviderResponse(error);
             return errorToken;
         }
 
         return token;
 
+    }
+
+    private Boolean validParameters(Map params) {
+        return Util.validParameters(params, REQUIRED_PARAMETERS);
+
+    }
+
+    private String getTokenCacheKeyPrefix(Map params) {
+        return (String) params.get("provider_id") + "|" + (String) params.get("client_id") + "|" + (String) params.get("scope");
     }
 
     @Override
@@ -215,9 +259,8 @@ public class TokenCacheImpl implements TokenCache {
         if (oldToken == null || newToken == null) {
             return;
         }
-        String key = oldToken.getProviderID() + "|" + oldToken.getClientID() + "|" + oldToken.getScope() + "|" + oldToken.getTokenType();
-        tokenCache.replace(key, oldToken, newToken);
-        //tokenCache.setExpiration(token.getTTL(), TimeUnit.SECONDS);
+        tokenCache.replace(oldToken.getTokenCacheKey(), oldToken, newToken);
+        tokenCache.setExpiration(newToken.getTokenCacheKey(),newToken.getTTL(), TimeUnit.SECONDS);
 
     }
 
@@ -226,9 +269,7 @@ public class TokenCacheImpl implements TokenCache {
         if (oldToken == null || newToken == null) {
             return;
         }
-        String key = oldToken.getProviderID() + "|" + oldToken.getClientID() + "|" + oldToken.getScope() + "|" + oldToken.getTokenType();
-        tokenCache.replace(key, oldToken, newToken);
-
+        tokenCache.replace(oldToken.getTokenCacheKey(), oldToken, newToken);
     }
 
     @Override
