@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.lgi.oauth</groupId>
     <artifactId>token_manager</artifactId>
-    <version>1.0</version>
+    <version>1.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <dependencies>
         <dependency>
@@ -51,8 +51,8 @@
         <project.scm.id>repo.upc.biz</project.scm.id>
     </properties>
     <scm>
-	    <connection>scm:svn:https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager/tags/token_manager-1.0</connection>
-	    <developerConnection>scm:svn:https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager/tags/token_manager-1.0</developerConnection>
+	    <connection>scm:svn:https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager/trunk</connection>
+	    <developerConnection>scm:svn:https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager/trunk</developerConnection>
     </scm>
 
     <distributionManagement>
