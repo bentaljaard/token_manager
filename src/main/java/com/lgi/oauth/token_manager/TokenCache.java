@@ -52,7 +52,7 @@ public interface TokenCache {
     
     public Boolean containsToken(String key);
     
-    public void replaceTokenWithTTL(Token oldToken, Token newToken);
+    public void replaceTokenWithTTL(Token oldToken, Token newToken, long TTL);
     
     public void replaceToken(Token oldToken, Token newToken);
     

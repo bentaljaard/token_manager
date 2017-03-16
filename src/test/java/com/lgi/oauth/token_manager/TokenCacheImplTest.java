@@ -226,62 +226,40 @@ public class TokenCacheImplTest {
         assertEquals(expResult, result);
 
     }
-
-    @Test
-    public void testLoadCacheNullToken() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-
-        //Get access to the token cache
-        TokenCacheImpl instance = new TokenCacheImpl();
-        final Field tokenCache = instance.getClass().getDeclaredField("tokenCache");
-        tokenCache.setAccessible(true);
-
-        //Setup reflection to test the private method
-        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
-        final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
-        loadCache.setAccessible(true);
-
-        //Setup mock objects
-        OAuthClient mockOAuthClient = mock(OAuthClient.class);
-        Provider mockProvider = mock(Provider.class);
-
-        //Setup params
-        String key = "local|test_client_1|null|access_token";
-        Map params = new HashMap();
-        params.put("provider_url", "http://test.com");
-        params.put("provider_id", "local");
-        params.put("grant_type", "client_credentials");
-        params.put("client_id", "test_client_1");
-
-        //Invoke method
-        Object[] parameters = new Object[]{mockOAuthClient, mockProvider, params, key};
-        ExpiringValue result = (ExpiringValue) loadCache.invoke(instance, parameters);
-
-        Object expValue = null;
-        assertEquals(expValue, result.getValue());
-
-//        
 //
-//        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>) tokenCache.get(instance);
+//    @Test
+//    public void testLoadCacheNullToken() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
 //
-//        Token token = new Token("test_client_1", "local", null, "access_token", 3600L, null);
+//        //Get access to the token cache
+//        TokenCacheImpl instance = new TokenCacheImpl();
+//        final Field tokenCache = instance.getClass().getDeclaredField("tokenCache");
+//        tokenCache.setAccessible(true);
 //
-////        cache.put("local|test_client_1|null|access_token", token);
-//        cache.put("test_token", token);
+//        //Setup reflection to test the private method
+//        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
+//        final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
+//        loadCache.setAccessible(true);
 //
-//        //Loaded cache
-//        String key = "test_key";
+//        //Setup mock objects
+//        OAuthClient mockOAuthClient = mock(OAuthClient.class);
+//        Provider mockProvider = mock(Provider.class);
+//
+//        //Setup params
+//        String key = "local|test_client_1|null|access_token";
 //        Map params = new HashMap();
 //        params.put("provider_url", "http://test.com");
 //        params.put("provider_id", "local");
 //        params.put("grant_type", "client_credentials");
 //        params.put("client_id", "test_client_1");
 //
-//        Map err = new HashMap();
-//        err.put("error", "The required parameters for this grant operation was not specified");
-//        Token expResult = new Token("test_client_1", "local", null, "error_token", 0, err);
-//        Token result = instance.getBearerToken(params);
-//        assertEquals(expResult, result);
-    }
+//        //Invoke method
+//        Object[] parameters = new Object[]{mockOAuthClient, mockProvider, params, key};
+//        ExpiringValue result = (ExpiringValue) loadCache.invoke(instance, parameters);
+//
+//        Object expValue = null;
+//        assertEquals(expValue, result.getValue());
+//
+//    }
 
     @Test
     public void testLoadCacheToken() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, AuthenticationException, IOException {
@@ -322,14 +300,71 @@ public class TokenCacheImplTest {
         assertEquals(3600, result.getDuration());
         assertEquals(TimeUnit.SECONDS, result.getTimeUnit());
     }
-
-    @Test
-    public void testLoadCacheTokenWithRefresh() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, AuthenticationException, IOException {
+    
+     @Test
+    public void testLoadCacheTokenNewRefresh() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, AuthenticationException, IOException {
 
         //Get access to the token cache
         TokenCacheImpl instance = new TokenCacheImpl();
         final Field tokenCache = instance.getClass().getDeclaredField("tokenCache");
         tokenCache.setAccessible(true);
+
+        //Setup reflection to test the private method
+        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
+        final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
+        loadCache.setAccessible(true);
+
+        //Setup params
+        String key = "local|test_client_1|null|access_token";
+
+        //Setup mock objects
+        OAuthClient mockOAuthClient = mock(OAuthClient.class);
+
+        Map dummyResponse = new HashMap();
+        dummyResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
+        dummyResponse.put("expires_in", "3600");
+        dummyResponse.put("token_type", "Bearer");
+        dummyResponse.put("refresh_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
+        dummyResponse.put("scope", "read");
+
+        Token token = new Token("test_client_1", "local", null, "access_token", 3600L, dummyResponse);
+
+        when(mockOAuthClient.getToken((Provider) any())).thenReturn(token);
+
+        Provider mockProvider = mock(Provider.class);
+
+        //Invoke method
+         Map params = new HashMap();
+        params.put("refresh_token_ttl", "4000");
+        Object[] methodParams = new Object[]{mockOAuthClient, mockProvider, params, key};
+        ExpiringValue result = (ExpiringValue) loadCache.invoke(instance, methodParams);
+
+//        System.out.println(result.toString());
+        assertEquals(token, result.getValue());
+        assertEquals(null, result.getExpirationPolicy());
+        assertEquals(3600, result.getDuration());
+        assertEquals(TimeUnit.SECONDS, result.getTimeUnit());
+        
+        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>) tokenCache.get(instance);
+        
+        //Also assert that refresh token in cache was updated
+        Token newRefreshToken = cache.get("local|test_client_1|null|refresh_token");
+        assertEquals("a4cf9dee-3ea4-412f-af63-f2bac6faab33", newRefreshToken.getProviderResponse().get("refresh_token"));
+        assertEquals(4000, newRefreshToken.getTTL());
+        assertEquals(4000, cache.getExpiration("local|test_client_1|null|refresh_token")/1000);
+        
+        
+        
+    }
+
+    @Test
+    public void testRefreshTokenWithRefresh() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, AuthenticationException, IOException {
+
+        //Get access to the token cache
+        TokenCacheImpl instance = new TokenCacheImpl();
+        final Field tokenCache = instance.getClass().getDeclaredField("tokenCache");
+        tokenCache.setAccessible(true);
+        
 
         ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>) tokenCache.get(instance);
 
@@ -366,12 +401,83 @@ public class TokenCacheImplTest {
         Object[] methodParams = new Object[]{mockOAuthClient, mockProvider, new HashMap(), key};
         ExpiringValue result = (ExpiringValue) loadCache.invoke(instance, methodParams);
 
-        System.out.println(result.toString());
-//        assertEquals(token, result.getValue());
-//        assertEquals(null, result.getExpirationPolicy());
-//        assertEquals(3600, result.getDuration());
-//        assertEquals(TimeUnit.SECONDS, result.getTimeUnit());
+//        System.out.println(result.toString());
+        assertEquals(newToken, result.getValue());
+        assertEquals(null, result.getExpirationPolicy());
+        assertEquals(3600, result.getDuration());
+        assertEquals(TimeUnit.SECONDS, result.getTimeUnit());
     }
+    
+    @Test
+    public void testRefreshTokenWithNewRefresh() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, AuthenticationException, IOException {
+
+        //Get access to the token cache
+        TokenCacheImpl instance = new TokenCacheImpl();
+        final Field tokenCache = instance.getClass().getDeclaredField("tokenCache");
+        tokenCache.setAccessible(true);
+
+        ExpiringMap<String, Token> cache = (ExpiringMap<String, Token>) tokenCache.get(instance);
+
+        Map dummyResponse = new HashMap();
+        dummyResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
+        dummyResponse.put("expires_in", "3600");
+        dummyResponse.put("token_type", "Bearer");
+        dummyResponse.put("refresh_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
+        dummyResponse.put("scope", "read");
+
+        Token token = new Token("test_client_1", "local", null, "refresh_token", 3600L, dummyResponse);
+
+        cache.put("local|test_client_1|null|refresh_token", token);
+
+        //Setup reflection to test the private method
+        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
+        final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
+        loadCache.setAccessible(true);
+
+        //Setup params
+        String key = "local|test_client_1|null|access_token";
+
+        //Setup mock objects       
+        OAuthClient mockOAuthClient = mock(OAuthClient.class);
+
+        String refreshToken = "a4cf9dee-3ea4-412f-af63-f2bac6faab33";
+        
+        Map newRefresh = new HashMap();
+        newRefresh.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab34");
+        newRefresh.put("expires_in", "3600");
+        newRefresh.put("token_type", "Bearer");
+        newRefresh.put("refresh_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab34");
+        newRefresh.put("scope", "read");
+        Token newToken = new Token("test_client_1", "local", null, "access_token", 3600L, newRefresh);
+
+        when(mockOAuthClient.refreshToken((Provider) any(), eq((String)refreshToken))).thenReturn(newToken);
+
+        Provider mockProvider = mock(Provider.class);
+
+        //Invoke method
+        Map params = new HashMap();
+        params.put("refresh_token_ttl", "4000");
+        Object[] methodParams = new Object[]{mockOAuthClient, mockProvider, params, key};
+        ExpiringValue result = (ExpiringValue) loadCache.invoke(instance, methodParams);
+
+//        System.out.println(result.toString());
+        //Assert that the correct access token was returned
+        assertEquals(newToken, result.getValue());
+        assertEquals(null, result.getExpirationPolicy());
+        assertEquals(3600, result.getDuration());
+        assertEquals(TimeUnit.SECONDS, result.getTimeUnit());
+        
+        //Also assert that refresh token in cache was updated
+        Token newRefreshToken = cache.get("local|test_client_1|null|refresh_token");
+        assertEquals("a4cf9dee-3ea4-412f-af63-f2bac6faab34", newRefreshToken.getProviderResponse().get("refresh_token"));
+        assertEquals(4000, newRefreshToken.getTTL());
+        assertEquals(4000, cache.getExpiration("local|test_client_1|null|refresh_token")/1000);
+//        System.out.println(cache.getExpiration("local|test_client_1|null|refresh_token"));
+        
+    }
+    
+   
+
 
     /**
      * Test of retrieveAndRemoveToken method, of class TokenCacheImpl.
@@ -555,12 +661,12 @@ public class TokenCacheImplTest {
         assertTrue(cache.getExpiration(key) <= 3600000);
 
         Token newToken = new Token("test_client_1", "local", null, "access_token", 4000L, null);
-        instance.replaceTokenWithTTL(token, newToken);
+        instance.replaceTokenWithTTL(token, newToken, 4000L);
 
         assertEquals(cache.get(key), newToken);
         assertTrue(cache.getExpiration(key) <= 4000000 && cache.getExpiration(key) > 3600000);
 
-        instance.replaceTokenWithTTL(newToken, null);
+        instance.replaceTokenWithTTL(newToken, null, 4000L);
 
         assertEquals(cache.get(key), newToken);
 

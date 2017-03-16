@@ -65,73 +65,8 @@ public class TokenCacheImpl implements TokenCache {
 
                 client = new OAuthClient(params, grant);
 
-                return loadCache(client,provider, params, k);
+                return loadCache(client, provider, params, k);
 
-//                //Does a refresh token exist in the cache
-//                String refreshTokenKey = k.substring(0, k.lastIndexOf("|")) + "|refresh_token";
-//                if (containsToken(refreshTokenKey)) {
-//                    logger.log(Level.INFO, "Token {0} found in cache", refreshTokenKey);
-//
-//                    //get refresh token from cache
-//                    refreshToken = retrieveToken(refreshTokenKey);
-//                    try {
-//                        token = client.refreshToken(provider, (String) refreshToken.getProviderResponse().get("refresh_token"));
-//                        logger.log(Level.INFO, "Got new access token from provider using refresh token");
-//                    } catch (Exception ex) {
-//                        logger.log(Level.SEVERE, null, ex);
-//                        error = new HashMap();
-//                        error.put("error", ex.getMessage());
-//                        //map can store null, so expire entry immediately
-//                        return new ExpiringValue(null, 0, TimeUnit.SECONDS);
-//                    }
-//                } else {
-//                    //Authenticate to get new access token
-//                    try {
-//                        token = (Token) client.getToken(provider);
-//                        if (token == null) {
-//                            throw new Exception("Token returned is null");
-//                        }
-//                        logger.log(Level.INFO, "Got new access token from provider1");
-//                    } catch (Exception ex) {
-//                        logger.log(Level.SEVERE, "Failed to get token from provider", ex);
-//                        error = new HashMap();
-//                        error.put("error", ex.getMessage());
-//                        //map can store null, so expire entry immediately
-//                        return new ExpiringValue(null, 0, TimeUnit.SECONDS);
-//                    }
-//                }
-//
-//                //Does response contain a refresh token, cache refresh or update what we already have
-//                if (token.getProviderResponse().containsKey("refresh_token")) {
-//                    logger.log(Level.INFO, "Response contains a refresh token");
-//
-//                    if (containsToken(refreshTokenKey)) {
-//                        // did the token change, update or replace
-//                        logger.log(Level.INFO, "Token {0} found in cache", refreshTokenKey);
-//                        refreshToken = retrieveToken(refreshTokenKey);
-//
-//                        if (!(refreshToken.getProviderResponse().get("refresh_token").equals(token.getProviderResponse().get("refresh_token")))) {
-//                            //replace existing refresh token
-//                            replaceTokenWithTTL(refreshToken, token);
-//                            logger.log(Level.INFO, "Replaced refresh token with a new value");
-//                        } else {
-//                            replaceToken(refreshToken, token);
-//                            logger.log(Level.INFO, "Refresh token value did not change, updating cache entry");
-//                        }
-//                    } else {
-//                        logger.log(Level.INFO, "No refresh token was found in cache, adding it");
-//                        refreshToken = new Token();
-//                        refreshToken.setClientID(token.getClientID());
-//                        refreshToken.setProviderID(token.getProviderID());
-//                        refreshToken.setScope(token.getScope());
-//                        refreshToken.setTTL(Integer.parseInt((String) params.get("refresh_token_ttl")));
-//                        refreshToken.setTokenType("refresh_token");
-//                        refreshToken.setProviderResponse(token.getProviderResponse());
-//                        cacheToken(refreshToken);
-//                    }
-//
-//                }
-//                return new ExpiringValue(token, token.getTTL(), TimeUnit.SECONDS);
             }
 
         };
@@ -142,7 +77,7 @@ public class TokenCacheImpl implements TokenCache {
                 .build();
     }
 
-    private ExpiringValue loadCache(OAuthClient client,Provider provider, Map params, String k) {
+    private ExpiringValue loadCache(OAuthClient client, Provider provider, Map params, String k) {
         Token token = null;
         Token refreshToken = null;
         //Does a refresh token exist in the cache
@@ -190,7 +125,14 @@ public class TokenCacheImpl implements TokenCache {
 
                 if (!(refreshToken.getProviderResponse().get("refresh_token").equals(token.getProviderResponse().get("refresh_token")))) {
                     //replace existing refresh token
-                    replaceTokenWithTTL(refreshToken, token);
+                    Token newToken = new Token();
+                    newToken.setClientID(token.getClientID());
+                    newToken.setProviderID(token.getProviderID());
+                    newToken.setScope(token.getScope());
+                    newToken.setTTL(Integer.parseInt((String) params.get("refresh_token_ttl")));
+                    newToken.setTokenType("refresh_token");
+                    newToken.setProviderResponse(token.getProviderResponse());
+                    replaceTokenWithTTL(refreshToken, newToken, Integer.parseInt((String) params.get("refresh_token_ttl")));
                     logger.log(Level.INFO, "Replaced refresh token with a new value");
                 } else {
                     replaceToken(refreshToken, token);
@@ -321,12 +263,12 @@ public class TokenCacheImpl implements TokenCache {
     }
 
     @Override
-    public void replaceTokenWithTTL(Token oldToken, Token newToken) {
+    public void replaceTokenWithTTL(Token oldToken, Token newToken, long TTL) {
         if (oldToken == null || newToken == null) {
             return;
         }
         tokenCache.replace(oldToken.getTokenCacheKey(), oldToken, newToken);
-        tokenCache.setExpiration(newToken.getTokenCacheKey(), newToken.getTTL(), TimeUnit.SECONDS);
+        tokenCache.setExpiration(newToken.getTokenCacheKey(), TTL, TimeUnit.SECONDS);
 
     }
 
