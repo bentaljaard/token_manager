@@ -5,25 +5,33 @@
  */
 package com.lgi.oauth.token_manager;
 
+import static com.lgi.oauth.token_manager.GrantType.SUPPORTED_GRANTS;
+
 /**
  *
  * @author btaljaard
  */
 public class GrantFactory {
-    
-   public GrantType getGrant(String grantType){
-      if(grantType == null){
-         return null;
-      }		
-      if(grantType.equalsIgnoreCase("CLIENT_CREDENTIALS")){
-         return new ClientCredentialsGrant();
-         
-      } else if(grantType.equalsIgnoreCase("PASSWORD")){
-         return new PasswordGrant();
-         
-      }
-      
-      return null;
-   }
-    
+
+    public GrantType getGrant(String grantType) {
+        if (grantType == null) {
+            return null;
+        }
+        GrantType grant = null;
+        if (SUPPORTED_GRANTS.contains(grantType)) {
+            if (grantType.equalsIgnoreCase("CLIENT_CREDENTIALS")) {
+                grant = new ClientCredentialsGrant();
+
+            } else if (grantType.equalsIgnoreCase("PASSWORD")) {
+                grant =  new PasswordGrant();
+
+            }
+
+        } else {
+            throw new UnsupportedOperationException("Grant type is not supported");
+        }
+
+        return grant;
+    }
+
 }

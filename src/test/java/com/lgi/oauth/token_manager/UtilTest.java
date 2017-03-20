@@ -5,6 +5,7 @@
  */
 package com.lgi.oauth.token_manager;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -125,6 +126,12 @@ public class UtilTest {
         Boolean result = Util.validParameters(params, expected);
         assertEquals(expResult, result);
        
+    }
+    
+    @Test
+    public void checkFinal(){
+        Util util = new Util();
+        assertTrue(Modifier.isFinal(util.getClass().getModifiers()));
     }
     
     

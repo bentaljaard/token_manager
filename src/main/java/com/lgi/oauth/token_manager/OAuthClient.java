@@ -25,7 +25,6 @@ public class OAuthClient {
 
     private Map params;
     private GrantType grant;
-    private final String USER_AGENT = "Mozilla/5.0";
     private static final Logger logger = Logger.getLogger(OAuthClient.class.getName());
     private static final ImmutableList<String> SUPPORTED_GRANTS = ImmutableList.of("client_credentials", "password");
 
@@ -57,7 +56,7 @@ public class OAuthClient {
         List<NameValuePair> headers = new ArrayList<NameValuePair>();
         List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 
-        logger.log(Level.INFO, "Received the following parameters {0}", params.toString());
+        logger.log(Level.FINEST, "Received the following parameters {0}", params.toString());
 
         //Set minimum grant parameters
         for (String param : grant.getMinimumGrantParameters()) {
@@ -80,11 +79,8 @@ public class OAuthClient {
         }
 
         // Call provider to get token
-        //String clientResponse = providerRequest((String) params.get("provider_url"), headers, urlParameters, credentials);
         Map providerResponse = provider.getResponse(headers, urlParameters, credentials);
 
-        // Save response from provider
-//        Map providerResponse = (HashMap) Util.jsonToMap(clientResponse);
         Token token = new Token();
         token.setClientID((String) params.get("client_id"));
         token.setProviderID((String) params.get("provider_id"));
@@ -98,17 +94,18 @@ public class OAuthClient {
         }
 
         token.setTokenType("access_token");
-        //If no expires_in returned in provider response, use session_duration value from request
+        //If no expires_in returned in provider response, use access_token_ttl value from request
         if (providerResponse.containsKey("expires_in")) {
             token.setTTL(Long.parseLong((String) providerResponse.get("expires_in")));
         } else {
-            if (params.containsKey("user_session_ttl")) {
-                token.setTTL(Integer.parseInt((String) params.get("user_session_ttl")));
+            if (params.containsKey("access_token_ttl")) {
+                token.setTTL(Integer.parseInt((String) params.get("access_token_ttl")));
             } else {
-                throw new IllegalArgumentException("Please set user_session_ttl parameter to determine access token TTL");
+                throw new IllegalArgumentException("Please set access_token_ttl parameter to determine access token TTL");
             }
 
         }
+        logger.log(Level.FINE, "Authenticated with the provider");
         return token;
     }
 
@@ -138,7 +135,7 @@ public class OAuthClient {
         List<NameValuePair> headers = new ArrayList<NameValuePair>();
         List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 
-        logger.log(Level.INFO, "Received the following parameters {0}", params.toString());
+        logger.log(Level.FINEST, "Received the following parameters {0}", params.toString());
 
         // Add parameters for refresh grant
         urlParameters.add(new BasicNameValuePair("grant_type", "refresh_token"));
@@ -160,11 +157,8 @@ public class OAuthClient {
         }
 
         // Call provider to get token
-//        String clientResponse = providerRequest((String) params.get("provider_url"), headers, urlParameters, credentials);
         Map providerResponse = provider.getResponse(headers, urlParameters, credentials);
 
-        // Save response from provider
-//        Map providerResponse = (HashMap) Util.jsonToMap(clientResponse);
 
         Token token = new Token();
         token.setClientID((String) params.get("client_id"));
@@ -179,17 +173,18 @@ public class OAuthClient {
         }
 
         token.setTokenType("access_token");
-        //If no expires_in returned in provider response, use session_duration value from request
+        //If no expires_in returned in provider response, use access_token_ttl value from request
         if (providerResponse.containsKey("expires_in")) {
             token.setTTL(Integer.parseInt((String) providerResponse.get("expires_in")));
         } else {
-            if (params.containsKey("session_duration")) {
-                token.setTTL(Integer.parseInt((String) params.get("session_duration")));
+            if (params.containsKey("access_token_ttl")) {
+                token.setTTL(Integer.parseInt((String) params.get("access_token_ttl")));
             } else {
-                throw new IllegalArgumentException("Please set session_duration parameter to determine access token TTL");
+                throw new IllegalArgumentException("Please set access_token_ttl parameter to determine access token TTL");
             }
 
         }
+        logger.log(Level.FINE, "Authenticated with the provider using refresh token");
         return token;
     }
 

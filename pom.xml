@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.lgi.oauth</groupId>
     <artifactId>token_manager</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <dependencies>
         <dependency>
@@ -43,6 +43,25 @@
             <scope>test</scope>
             <type>jar</type>
         </dependency>
+        <dependency>
+            <groupId>nl.jqno.equalsverifier</groupId>
+            <artifactId>equalsverifier</artifactId>
+            <version>2.2.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mock-server</groupId>
+            <artifactId>mockserver-netty</artifactId>
+            <version>3.10.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>1.1.1</version>
+            <scope>test</scope>
+            <type>jar</type>
+        </dependency>
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -51,8 +70,8 @@
         <project.scm.id>repo.upc.biz</project.scm.id>
     </properties>
     <scm>
-	    <connection>scm:svn:https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager/trunk</connection>
-	    <developerConnection>scm:svn:https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager/trunk</developerConnection>
+        <connection>scm:svn:https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager/trunk</connection>
+        <developerConnection>scm:svn:https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager/trunk</developerConnection>
     </scm>
 
     <distributionManagement>
@@ -87,37 +106,37 @@
                 </executions>
             </plugin>
             <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>versions-maven-plugin</artifactId>
-            <version>2.3</version>
-        </plugin>
-        <plugin>
-            <artifactId>maven-scm-plugin</artifactId>
-            <version>1.9.5</version>
-            <configuration>
-                <tag>${project.artifactId}-${project.version}</tag>
-            </configuration>
-        </plugin>
-         <!--<plugin>
-        <groupId>se.jiderhamn</groupId>
-        <artifactId>promote-maven-plugin</artifactId>
-        <version>2.0.0</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>make-promotable</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>-->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>2.5.3</version>
-        <configuration>
-          <tagBase>https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager/tags</tagBase>
-        </configuration>
-      </plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.3</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-scm-plugin</artifactId>
+                <version>1.9.5</version>
+                <configuration>
+                    <tag>${project.artifactId}-${project.version}</tag>
+                </configuration>
+            </plugin>
+            <!--<plugin>
+              <groupId>se.jiderhamn</groupId>
+              <artifactId>promote-maven-plugin</artifactId>
+              <version>2.0.0</version>
+              <executions>
+                <execution>
+                  <goals>
+                    <goal>make-promotable</goal>
+                  </goals>
+                </execution>
+              </executions>
+            </plugin>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.3</version>
+                <configuration>
+                    <tagBase>https://repo.upc.biz/svn/eai/branches/OneFusionFrameworkTools/token_manager/tags</tagBase>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 </project>

@@ -17,7 +17,6 @@ public class ClientCredentialsGrant implements GrantType {
 
     private static final String GRANT_TYPE = "client_credentials";
     private static final ImmutableList<String> SUPPORTED_OPERATIONS = ImmutableList.of("authenticate");
-//    private static final ImmutableList<String> REQUIRED_PARAMETERS = ImmutableList.of("provider_url", "provider_id", "grant_type", "client_id");
     private static final ImmutableList<String> MINIMUM_GRANT_PARAMETERS = ImmutableList.of("grant_type");
 
     private static final ImmutableList<String> CLIENT_AUTH_PARAMETERS = ImmutableList.of("client_id", "client_secret");

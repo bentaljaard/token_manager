@@ -1,22 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.lgi.oauth.token_manager;
 
-import static com.lgi.oauth.token_manager.GrantType.REQUIRED_PARAMETERS;
-import static com.lgi.oauth.token_manager.GrantType.SUPPORTED_GRANTS;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.jodah.expiringmap.ExpirationListener;
 import net.jodah.expiringmap.ExpirationPolicy;
-import net.jodah.expiringmap.ExpiringEntryLoader;
 import net.jodah.expiringmap.ExpiringMap;
-import net.jodah.expiringmap.ExpiringValue;
 
 /**
  *
@@ -26,9 +15,6 @@ public class TokenCacheImpl implements TokenCache {
 
     private final ExpiringMap<String, Token> tokenCache;
     private static final Logger logger = Logger.getLogger(TokenCacheImpl.class.getName());
-
-    private Map params;
-    private Map error;
 
     public TokenCacheImpl() {
 
@@ -40,126 +26,19 @@ public class TokenCacheImpl implements TokenCache {
             }
         };
 
-        ExpiringEntryLoader<String, Token> entryLoader = new ExpiringEntryLoader<String, Token>() {
-            @Override
-            public ExpiringValue<Token> load(String k) {
-                //Already verified that minimum parameters are provided 
-//                Token token = null;
-//                Token refreshToken = null;
-                OAuthClient client;
-                GrantType grant = null;
-
-                //Create new provider                
-                Provider provider = new Provider((String) params.get("provider_url"), (String) params.get("provider_id"));
-
-                if (SUPPORTED_GRANTS.contains(params.get("grant_type"))) {
-                    GrantFactory gf = new GrantFactory();
-                    grant = gf.getGrant((String) params.get("grant_type"));
-                } else {
-                    //set error and exit
-                    error = new HashMap();
-                    error.put("error", "Grant Type is not supported");
-                    //map can store null, so expire entry immediately
-                    return new ExpiringValue(null, 0, TimeUnit.SECONDS);
-                }
-
-                client = new OAuthClient(params, grant);
-
-                return loadCache(client, provider, params, k);
-
-            }
-
-        };
         tokenCache = ExpiringMap.builder()
                 .expirationListener(expirationListener)
-                .expiringEntryLoader(entryLoader)
                 .variableExpiration()
                 .build();
     }
-
-    private ExpiringValue loadCache(OAuthClient client, Provider provider, Map params, String k) {
-        Token token = null;
-        Token refreshToken = null;
-        //Does a refresh token exist in the cache
-        String refreshTokenKey = k.substring(0, k.lastIndexOf("|")) + "|refresh_token";
-        if (containsToken(refreshTokenKey)) {
-            logger.log(Level.INFO, "Token {0} found in cache", refreshTokenKey);
-
-            //get refresh token from cache
-            refreshToken = retrieveToken(refreshTokenKey);
-            try {
-                token = client.refreshToken(provider, (String) refreshToken.getProviderResponse().get("refresh_token"));
-                logger.log(Level.INFO, "Got new access token from provider using refresh token");
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, null, ex);
-                error = new HashMap();
-                error.put("error", ex.getMessage());
-                //map can store null, so expire entry immediately
-                return new ExpiringValue(null, 0, TimeUnit.SECONDS);
-            }
-        } else {
-            //Authenticate to get new access token
-            try {
-                token = (Token) client.getToken(provider);
-                if (token == null) {
-                    throw new Exception("Token returned is null");
-                }
-                logger.log(Level.INFO, "Got new access token from provider1");
-            } catch (Exception ex) {
-                logger.log(Level.SEVERE, "Failed to get token from provider", ex);
-                error = new HashMap();
-                error.put("error", ex.getMessage());
-                //map can store null, so expire entry immediately
-                return new ExpiringValue(null, 0, TimeUnit.SECONDS);
-            }
-        }
-
-        //Does response contain a refresh token, cache refresh or update what we already have
-        if (token.getProviderResponse().containsKey("refresh_token")) {
-            logger.log(Level.INFO, "Response contains a refresh token");
-
-            if (containsToken(refreshTokenKey)) {
-                // did the token change, update or replace
-                logger.log(Level.INFO, "Token {0} found in cache", refreshTokenKey);
-                refreshToken = retrieveToken(refreshTokenKey);
-
-                if (!(refreshToken.getProviderResponse().get("refresh_token").equals(token.getProviderResponse().get("refresh_token")))) {
-                    //replace existing refresh token
-                    Token newToken = new Token();
-                    newToken.setClientID(token.getClientID());
-                    newToken.setProviderID(token.getProviderID());
-                    newToken.setScope(token.getScope());
-                    newToken.setTTL(Integer.parseInt((String) params.get("refresh_token_ttl")));
-                    newToken.setTokenType("refresh_token");
-                    newToken.setProviderResponse(token.getProviderResponse());
-                    replaceTokenWithTTL(refreshToken, newToken, Integer.parseInt((String) params.get("refresh_token_ttl")));
-                    logger.log(Level.INFO, "Replaced refresh token with a new value");
-                } else {
-                    replaceToken(refreshToken, token);
-                    logger.log(Level.INFO, "Refresh token value did not change, updating cache entry");
-                }
-            } else {
-                logger.log(Level.INFO, "No refresh token was found in cache, adding it");
-                refreshToken = new Token();
-                refreshToken.setClientID(token.getClientID());
-                refreshToken.setProviderID(token.getProviderID());
-                refreshToken.setScope(token.getScope());
-                refreshToken.setTTL(Integer.parseInt((String) params.get("refresh_token_ttl")));
-                refreshToken.setTokenType("refresh_token");
-                refreshToken.setProviderResponse(token.getProviderResponse());
-                cacheToken(refreshToken);
-            }
-
-        }
-        return new ExpiringValue(token, token.getTTL(), TimeUnit.SECONDS);
-    }
+    
 
     @Override
     public void cacheToken(Token token) {
         if (token == null) {
             return;
         }
-        tokenCache.put(token.getTokenCacheKey(), token, ExpirationPolicy.ACCESSED, token.getTTL(), TimeUnit.SECONDS);
+        tokenCache.put(token.getTokenCacheKey(), token, ExpirationPolicy.CREATED, token.getTTL(), TimeUnit.SECONDS);
     }
 
     @Override
@@ -169,55 +48,11 @@ public class TokenCacheImpl implements TokenCache {
         }
         Token token = tokenCache.get(key);
         if (token == null) {
-            logger.log(Level.INFO, "Token {0} not found in cache", key);
+            logger.log(Level.FINE, "Token {0} not found in cache", key);
         } else {
-            logger.log(Level.INFO, "Token {0} found in cache", key);
+            logger.log(Level.FINE, "Token {0} found in cache", key);
         }
         return token;
-    }
-
-    @Override
-    public Token getBearerToken(Map params) {
-        Token errorToken;
-        //Check if we have valid parameters to interact with the cache
-        if (validParameters(params)) {
-            this.params = params;
-        } else {
-            errorToken = new Token();
-            errorToken.setTokenType("error_token");
-            error = new HashMap();
-            error.put("error", "Not all required parameters provided to get a token");
-            errorToken.setProviderResponse(error);
-            return errorToken;
-        }
-
-        Token token = retrieveToken(getTokenCacheKeyPrefix(params) + "|access_token");
-        if (token == null && error == null) {
-            error = new HashMap();
-            error.put("error", "Could not retrieve token from provider");
-        }
-
-        if (error != null) {
-            logger.log(Level.INFO, error.toString());
-            errorToken = new Token();
-            errorToken.setClientID((String) params.get("client_id"));
-            errorToken.setProviderID((String) params.get("provider_id"));
-            errorToken.setTokenType("error_token");
-            errorToken.setProviderResponse(error);
-            return errorToken;
-        }
-
-        return token;
-
-    }
-
-    private Boolean validParameters(Map params) {
-        return Util.validParameters(params, REQUIRED_PARAMETERS);
-
-    }
-
-    private String getTokenCacheKeyPrefix(Map params) {
-        return (String) params.get("provider_id") + "|" + (String) params.get("client_id") + "|" + (String) params.get("scope");
     }
 
     @Override
@@ -268,6 +103,7 @@ public class TokenCacheImpl implements TokenCache {
             return;
         }
         tokenCache.replace(oldToken.getTokenCacheKey(), oldToken, newToken);
+        tokenCache.setExpirationPolicy(ExpirationPolicy.CREATED);
         tokenCache.setExpiration(newToken.getTokenCacheKey(), TTL, TimeUnit.SECONDS);
 
     }
@@ -280,13 +116,5 @@ public class TokenCacheImpl implements TokenCache {
         tokenCache.replace(oldToken.getTokenCacheKey(), oldToken, newToken);
     }
 
-    @Override
-    public String getTokenExpiryTimes() {
-        String result = "";
-        for (Map.Entry<String, Token> entry : tokenCache.entrySet()) {
-            result += (entry.getKey() + "(" + getTokenExpiry(entry.getKey()) + ")");
-        }
-        return result;
-    }
-
+   
 }

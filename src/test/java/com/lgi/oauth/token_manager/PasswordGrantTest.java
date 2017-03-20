@@ -85,6 +85,23 @@ public class PasswordGrantTest {
         assertEquals(expResult, result);
       
     }
+    
+     @Test
+    public void testValidParametersFalse() {
+       Map params = new HashMap();
+        params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
+        params.put("grant_type", "password");
+//        params.put("client_id", "test_client_1");
+        params.put("provider_id", "local");
+        params.put("basic_username", "test_client_1");
+        params.put("basic_password", "test_secret");
+        params.put("username", "test_client_1");
+        params.put("password", "test_secret");
+        PasswordGrant instance = new PasswordGrant();
+       
+        assertEquals(false, instance.validParameters(params));
+      
+    }
 
     /**
      * Test of getMinimumGrantParameters method, of class PasswordGrant.

@@ -8,6 +8,8 @@ package com.lgi.oauth.token_manager;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import nl.jqno.equalsverifier.Warning;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -310,6 +312,30 @@ public class TokenTest {
         String result = instance.toString();
         assertEquals(expResult, result);
 
+    }
+
+    @Test
+    public void testGetTokenCacheKeyPrefix() {
+        String client_id = "test_client";
+        String provider_id = "test_provider";
+        String token_type = "test_token";
+        Long time_to_live = 5L;
+        String scope_value = "test_scope";
+        Map provider_response = new HashMap();
+        provider_response.put("test_key", "test_value");
+
+        Token token = new Token(client_id, provider_id, scope_value, token_type, time_to_live, provider_response);
+
+        assertEquals("test_provider|test_client|test_scope", token.getTokenCacheKeyPrefix());
+
+    }
+
+    @Test
+    public void testEquals() {
+        EqualsVerifier.forClass(Token.class)
+                .usingGetClass()
+                .suppress(Warning.NONFINAL_FIELDS)
+                .verify();
     }
 
 }

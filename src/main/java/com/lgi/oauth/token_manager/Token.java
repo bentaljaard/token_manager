@@ -13,12 +13,12 @@ public class Token {
 
     public Token() {
         super();
-//        this.clientID = "";
-//        this.providerID = "";
-//        this.scope = "";
-//        this.tokenType = "";
-//        this.ttl = 0L;
-//        this.providerResponse = null;
+        clientID = null;
+        tokenType = null;
+        providerID = null;
+        scope = null;
+        ttl = 0L;
+        providerResponse = null;
     }
 
     public Token(String clientID, String providerID, String scope, String tokenType, long ttl, Map providerResponse) {
