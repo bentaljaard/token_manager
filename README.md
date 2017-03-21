@@ -51,6 +51,8 @@ tm = new TokenManager();
 ###### In your method requiring the access token:
 
 ```
+GrantFactory gf = new GrantFactory();
+OAuthClient client = null;
 
 Map params = new HashMap();
 params.put("provider_url","https://some_auth_provider_url.com/token");   //required
@@ -62,8 +64,14 @@ params.put("basic_password", "your_basic_auth_password");   //when using basic a
 params.put("scope", "your_requested_application_scope");   //optional if scopes are required
 params.put("access_token_ttl", "your_access_token_ttl_in_seconds"); //optional, if provider does not return an expiry time for the access token in the response
 
+if(req.containsKey("grant_type")){
+  client = new OAuthClient(params,gf.getGrant((String)req.get("grant_type")));
+} else {
+    // handle error        
+}
 
-Token token = (Token)tm.getBearerToken(params);
+
+Token token = (Token)tm.getBearerToken(client);
 
 if(token.getTokenType() == "error_token"){
   String errorMessage = token.getProviderResponse().get("error");
@@ -139,6 +147,9 @@ tm = new TokenManager();
 ###### In your method requiring the access token:
 
 ```
+GrantFactory gf = new GrantFactory();
+OAuthClient client = null;
+
 
 Map params = new HashMap();
 params.put("provider_url","https://some_auth_provider_url.com/token");   //required
@@ -153,7 +164,14 @@ params.put("scope", "your_requested_application_scope");   //optional if scopes 
 params.put("refresh_token_ttl", "your_refresh_token_ttl_in_seconds");   //required, specify a duration to keep the refresh token in the cache
 params.put("access_token_ttl", "your_access_token_ttl_in_seconds"); //optional, if provider does not return an expiry time for the access token in the response
 
-Token token = (Token)tm.getBearerToken(params);
+if(req.containsKey("grant_type")){
+  client = new OAuthClient(params,gf.getGrant((String)req.get("grant_type")));
+} else {
+    // handle error        
+}
+
+
+Token token = (Token)tm.getBearerToken(client);
 
 if(token.getTokenType() == "error_token"){
   String errorMessage = token.getProviderResponse().get("error");
