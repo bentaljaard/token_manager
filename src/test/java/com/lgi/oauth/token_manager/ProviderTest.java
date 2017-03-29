@@ -169,7 +169,7 @@ public class ProviderTest {
 
         String url = "http://localhost:" + mockServerRule.getPort() + "/test";
 
-        Provider instance = new Provider(url,10,100);
+        Provider instance = new Provider(url,10,-1);
 
         List<NameValuePair> headers = null;
         List<NameValuePair> urlParameters = null;
@@ -192,7 +192,7 @@ public class ProviderTest {
 
         String url = "http://localhost:" + mockServerRule.getPort() + "/test";
 
-        Provider instance = new Provider(url,10,100);
+        Provider instance = new Provider(url,10,-1);
 
         List<NameValuePair> headers = null;
         List<NameValuePair> urlParameters = null;
@@ -214,7 +214,7 @@ public class ProviderTest {
 
         String url = "http://blahdummy.io";
 
-        Provider instance = new Provider(url,10,100);
+        Provider instance = new Provider(url,10,-1);
 
         List<NameValuePair> headers = null;
         List<NameValuePair> urlParameters = null;
@@ -249,7 +249,7 @@ public class ProviderTest {
 
         String url = "http://localhost:" + mockServerRule.getPort() + "/test";
 
-        Provider instance = new Provider(url,10,100);
+        Provider instance = new Provider(url,10,-1);
 
         urlParameters.add(new BasicNameValuePair("testkey", "testvalue"));
         headers.add(new BasicNameValuePair("testheader", "testheadervalue"));
@@ -292,7 +292,7 @@ public class ProviderTest {
 
         String url = "http://localhost:" + mockServerRule.getPort() + "/test";
 
-        Provider instance = new Provider(url,10,100);
+        Provider instance = new Provider(url,10,-1);
 
         urlParameters.add(new BasicNameValuePair("testkey", "testvalue"));
         headers.add(new BasicNameValuePair("testheader", "testheadervalue"));
