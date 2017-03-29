@@ -5,11 +5,17 @@
  */
 package com.lgi.oauth.token_manager;
 
+import com.google.common.collect.ImmutableList;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -20,6 +26,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthenticationException;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.auth.BasicScheme;
@@ -35,10 +42,27 @@ public class Provider {
     private String providerID;
     private static final Logger logger = Logger.getLogger(Provider.class.getName());
     private final String USER_AGENT = "Mozilla/5.0";
+    public static final ImmutableList<Integer> SUCCESS_CODES = ImmutableList.of(200, 201, 204);
+    private int connectTimeoutMS;
+    private int socketTimeoutMS;
 
-    public Provider(String url, String providerID) {
+    public Provider(String url, int connectTimeoutMS, int socketTimeoutMS) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         this.url = url;
-        this.providerID = providerID;
+        if (url == null) {
+            this.providerID = null;
+        } else {
+            this.providerID = calculateProviderHash(url);
+        }
+        this.connectTimeoutMS = connectTimeoutMS;
+        this.socketTimeoutMS = socketTimeoutMS;
+
+    }
+
+    private String calculateProviderHash(String url) throws NoSuchAlgorithmException {
+        byte[] bytesOfMessage = url.getBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String providerID = new BigInteger(1, md.digest(bytesOfMessage)).toString(16);
+        return providerID;
     }
 
     public String getURL() {
@@ -49,17 +73,34 @@ public class Provider {
         return this.providerID;
     }
 
-    public void setURL(String url) {
+    public void setURL(String url) throws UnsupportedEncodingException, NoSuchAlgorithmException {
         this.url = url;
+        if (url == null) {
+            this.providerID = null;
+        } else {
+            this.providerID = calculateProviderHash(url);
+        }
     }
 
-    public void setID(String id) {
-        this.providerID = id;
+    public void setConnectTimeout(int ms) {
+        this.connectTimeoutMS = ms;
     }
 
-    public Map getResponse(List<NameValuePair> headers, List<NameValuePair> urlParameters, UsernamePasswordCredentials credentials) throws AuthenticationException, IOException, UnknownHostException {
+    public void setSocketTimeout(int ms) {
+        this.socketTimeoutMS = ms;
+    }
+
+//    public void setID(String id) {
+//        this.providerID = id;
+//    }
+    public Map getResponse(List<NameValuePair> headers, List<NameValuePair> urlParameters, UsernamePasswordCredentials credentials) throws AuthenticationException, IOException, UnknownHostException, SocketTimeoutException {
         // Create HTTP client
+        RequestConfig config = RequestConfig.custom()
+                .setConnectTimeout(connectTimeoutMS)
+                .setSocketTimeout(socketTimeoutMS).build();
+
         HttpClient client = HttpClientBuilder.create()
+                .setDefaultRequestConfig(config)
                 .build();
 
         HttpPost post = new HttpPost(url);
@@ -109,14 +150,17 @@ public class Provider {
             mimeType = contentType.getValue().split(";")[0].trim();
         }
 
-//        System.out.println(result.toString());
-//        System.out.println(mimeType);
+        Map responseBody = null;
         if (mimeType.equals("application/json")) {
-            return Util.jsonToMap(result.toString());
+            responseBody = Util.jsonToMap(result.toString());
         } else {
-            return Util.jsonToMap("{\"error\":\"Response from provider is not JSON\"}");
+            if (!SUCCESS_CODES.contains(response.getStatusLine().getStatusCode())) {
+                responseBody = Util.jsonToMap("{\"error\":\"Error Code:" + response.getStatusLine().getStatusCode() + " - " + response.getStatusLine().getReasonPhrase() + "\"}");
+            } else {
+                responseBody = Util.jsonToMap("{\"error\":\"Could not parse response from provider\"}");
+
+            }
         }
-
+        return responseBody;
     }
-
 }

@@ -7,6 +7,9 @@ package com.lgi.oauth.token_manager;
 
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +54,7 @@ public class OAuthClient {
 
   
 
-    private Token authenticate(Provider provider) throws AuthenticationException, IOException {
+    private Token authenticate(Provider provider) throws AuthenticationException, IOException, UnknownHostException, SocketTimeoutException  {
         UsernamePasswordCredentials credentials = null;
         List<NameValuePair> headers = new ArrayList<NameValuePair>();
         List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
@@ -83,7 +86,7 @@ public class OAuthClient {
 
         Token token = new Token();
         token.setClientID((String) params.get("client_id"));
-        token.setProviderID((String) params.get("provider_id"));
+        token.setProviderID(provider.getID());
         token.setScope((String) params.get("scope"));
         token.setProviderResponse(providerResponse);
 
@@ -109,7 +112,7 @@ public class OAuthClient {
         return token;
     }
 
-    public Token getToken(Provider provider) throws AuthenticationException, IOException {
+    public Token getToken(Provider provider) throws AuthenticationException, IOException, UnknownHostException, SocketTimeoutException  {
         Token token = null;
         //get the type of grant
         String grantType = grant.getType();
@@ -130,7 +133,7 @@ public class OAuthClient {
         return token;
     }
 
-    private Token refresh(Provider provider, String refreshToken) throws AuthenticationException, IOException {
+    private Token refresh(Provider provider, String refreshToken) throws AuthenticationException, IOException, UnknownHostException, SocketTimeoutException {
         UsernamePasswordCredentials credentials = null;
         List<NameValuePair> headers = new ArrayList<NameValuePair>();
         List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
@@ -162,7 +165,7 @@ public class OAuthClient {
 
         Token token = new Token();
         token.setClientID((String) params.get("client_id"));
-        token.setProviderID((String) params.get("provider_id"));
+        token.setProviderID(provider.getID());
         token.setScope((String) params.get("scope"));
         token.setProviderResponse(providerResponse);
 
@@ -188,7 +191,7 @@ public class OAuthClient {
         return token;
     }
 
-    public Token refreshToken(Provider provider, String refreshToken) throws AuthenticationException, IOException {
+    public Token refreshToken(Provider provider, String refreshToken) throws AuthenticationException, IOException, UnknownHostException, SocketTimeoutException  {
 
         Token token = null;
         //get the type of grant

@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public interface GrantType {
     
-    public static final ImmutableList<String> REQUIRED_PARAMETERS = ImmutableList.of("provider_url", "provider_id", "grant_type", "client_id");
+    public static final ImmutableList<String> REQUIRED_PARAMETERS = ImmutableList.of("provider_url", "grant_type", "client_id");
     public static final ImmutableList<String> SUPPORTED_GRANTS = ImmutableList.of("client_credentials", "password");
     
     public String getType();

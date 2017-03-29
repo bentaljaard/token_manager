@@ -5,11 +5,23 @@
  */
 package com.lgi.oauth.token_manager;
 
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.Multiset.Entry;
+import com.google.common.util.concurrent.Service;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
+import java.net.SocketTimeoutException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.apache.http.auth.AuthenticationException;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -56,6 +68,84 @@ public class TokenManagerTest {
 
     }
 
+    @Test
+    public void testSetConnectTimeout() throws NoSuchFieldException, IllegalAccessException, UnsupportedEncodingException, NoSuchAlgorithmException {
+        int timeout = 60;
+        TokenManager instance = new TokenManager();
+        instance.setConnectTimeout(timeout);
+
+        final Field timeout_value = instance.getClass().getDeclaredField("connectTimeoutMS");
+        timeout_value.setAccessible(true);
+        assertEquals("Fields didn't match", timeout_value.get(instance), timeout);
+
+    }
+
+    @Test
+    public void testSetSocketTimeout() throws NoSuchFieldException, IllegalAccessException, UnsupportedEncodingException, NoSuchAlgorithmException {
+        int timeout = 60;
+        TokenManager instance = new TokenManager();
+        instance.setSocketTimeout(timeout);
+
+        final Field timeout_value = instance.getClass().getDeclaredField("socketTimeoutMS");
+        timeout_value.setAccessible(true);
+        assertEquals("Fields didn't match", timeout_value.get(instance), timeout);
+
+    }
+
+    @Test
+    public void testClientWaitTime() throws NoSuchFieldException, IllegalAccessException, UnsupportedEncodingException, NoSuchAlgorithmException {
+        long timeout = 60;
+        TokenManager instance = new TokenManager();
+        instance.setClientWaitTime(timeout);
+
+        final Field timeout_value = instance.getClass().getDeclaredField("clientWaitTimeMS");
+        timeout_value.setAccessible(true);
+        assertEquals("Fields didn't match", timeout_value.get(instance), timeout);
+
+    }
+
+    @Test
+    public void testHealthCheckInterval() throws NoSuchFieldException, IllegalAccessException, UnsupportedEncodingException, NoSuchAlgorithmException {
+        int timeout = 60;
+        TokenManager instance = new TokenManager();
+        instance.setHealthCheckInterval(timeout);
+
+        final Field timeout_value = instance.getClass().getDeclaredField("healthCheckIntervalMS");
+        timeout_value.setAccessible(true);
+        assertEquals("Fields didn't match", timeout_value.get(instance), timeout);
+
+    }
+
+    @Test
+    public void testStartHealthCheck() {
+        TokenManager instance = new TokenManager();
+        instance.startHealthCheck();
+        ImmutableCollection runningServices = instance.getHealthCheckStatus().get(Service.State.RUNNING);
+        for (Object entry : runningServices) {
+            assertTrue(entry instanceof ProviderHealthChecker);
+        }
+        instance.stopHealthCheck();
+        ImmutableCollection stopped = instance.getHealthCheckStatus().get(Service.State.TERMINATED);
+        for (Object entry : stopped) {
+            assertTrue(entry instanceof ProviderHealthChecker);
+        }
+    }
+
+    @Test
+    public void testStartHealthCheckTimeout() {
+        TokenManager instance = new TokenManager();
+        instance.startHealthCheck(60);
+        ImmutableCollection runningServices = instance.getHealthCheckStatus().get(Service.State.RUNNING);
+        for (Object entry : runningServices) {
+            assertTrue(entry instanceof ProviderHealthChecker);
+        }
+        instance.stopHealthCheck();
+        ImmutableCollection stopped = instance.getHealthCheckStatus().get(Service.State.TERMINATED);
+        for (Object entry : stopped) {
+            assertTrue(entry instanceof ProviderHealthChecker);
+        }
+    }
+
     /**
      * Test of clearTokenCache method, of class TokenManager.
      */
@@ -89,23 +179,20 @@ public class TokenManagerTest {
         Token result = instance.getBearerToken(client);
         Map dummyResponse = new HashMap();
         dummyResponse.put("error", "Not all required parameters provided to get a token");
-        
 
         Token token = new Token(null, null, null, "error_token", 0L, dummyResponse);
         assertEquals(token, result);
-      
+
     }
-    
+
     @Test
-    public void testGetBearerTokenFromCache() {
+    public void testGetBearerTokenFromCache() throws NoSuchAlgorithmException {
         Map params = new HashMap();
         params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
         params.put("grant_type", "client_credentials");
         params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
-        params.put("provider_id", "local");
-        
-        
+
         TokenManager instance = new TokenManager();
         TokenCache cache = instance.getTokenCache();
         Map dummyResponse = new HashMap();
@@ -113,17 +200,20 @@ public class TokenManagerTest {
         dummyResponse.put("expires_in", "3600");
         dummyResponse.put("token_type", "Bearer");
         dummyResponse.put("scope", "read");
+        byte[] bytesOfMessage = "http://localhost:8080/v1/oauth/tokens".getBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String providerID = new BigInteger(1, md.digest(bytesOfMessage)).toString(16);
 
-        Token token = new Token("test_client_1", "local", null, "access_token", 3600L, dummyResponse);
-        
+        Token token = new Token("test_client_1", providerID, null, "access_token", 3600L, dummyResponse);
+
         cache.cacheToken(token);
-        OAuthClient client =  new OAuthClient(params,new ClientCredentialsGrant());
+        OAuthClient client = new OAuthClient(params, new ClientCredentialsGrant());
         Token result = instance.getBearerToken(client);
-       
+
         assertEquals(token, result);
-      
+
     }
-    
+
     @Test
     public void testGetBearerToken() throws AuthenticationException, IOException {
         Map params = new HashMap();
@@ -131,9 +221,7 @@ public class TokenManagerTest {
         params.put("grant_type", "client_credentials");
         params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
-        params.put("provider_id", "local");
-        
-        
+
         TokenManager instance = new TokenManager();
         TokenCache cache = instance.getTokenCache();
         Map dummyResponse = new HashMap();
@@ -143,20 +231,89 @@ public class TokenManagerTest {
         dummyResponse.put("scope", "read");
 
         Token token = new Token("test_client_1", "local", null, "access_token", 3600L, dummyResponse);
-                
-        
-        OAuthClient client =  mock(OAuthClient.class);
+
+        OAuthClient client = mock(OAuthClient.class
+        );
         when(client.getToken((Provider) any())).thenReturn(token);
         when(client.getParams()).thenReturn(params);
         when(client.getGrant()).thenReturn(new ClientCredentialsGrant());
-        
+
         Token result = instance.getBearerToken(client);
         System.out.println(result.toString());
-       
+
         assertEquals(token, result);
-      
+
     }
-    
+    @Test
+    public void testGetBearerTokenSocketTimeout() throws AuthenticationException, IOException {
+        Map params = new HashMap();
+        params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
+        params.put("grant_type", "client_credentials");
+        params.put("client_id", "test_client_1");
+        params.put("client_secret", "test_secret");
+
+        TokenManager instance = new TokenManager();
+        Map dummyResponse = new HashMap();
+        dummyResponse.put("error", "Timeout occured requesting token from provider");
+       
+
+        Token token = new Token(null, null, null, "error_token", 0, dummyResponse);
+
+        OAuthClient client = mock(OAuthClient.class);
+        when(client.getToken((Provider) any())).thenThrow(new SocketTimeoutException());
+        when(client.getParams()).thenReturn(params);
+        when(client.getGrant()).thenReturn(new ClientCredentialsGrant());
+
+        Token result = instance.getBearerToken(client);
+        System.out.println(result.toString());
+
+        assertEquals(token, result);
+
+    }
+
+    @Test
+    public void testGetBearerTokenDegradedProvider() throws AuthenticationException, IOException, NoSuchFieldException, UnsupportedEncodingException, NoSuchAlgorithmException, IllegalAccessException {
+        TokenManager instance = new TokenManager();
+        Map degradedProviderMap = new ConcurrentHashMap();
+
+        Provider testProvider = new Provider("test.url", 10, 60);
+
+        final Field degraded_providers = instance.getClass().getDeclaredField("degradedProviders");
+        degraded_providers.setAccessible(true);
+        degraded_providers.set(instance, degradedProviderMap);
+
+        long timeout = 60;
+        instance.setClientWaitTime(timeout);
+        Map params = new HashMap();
+        params.put("provider_url", "test.url");
+        params.put("grant_type", "client_credentials");
+        params.put("client_id", "test_client_1");
+        params.put("client_secret", "test_secret");
+
+        Map dummyResponse = new HashMap();
+        dummyResponse.put("error", "Oauth provider is in a degraded state, retry later");
+        instance.startHealthCheck();
+
+        Token token = new Token(null, null, null, "error_token", 0, dummyResponse);
+
+        OAuthClient client = mock(OAuthClient.class);
+        when(client.getToken((Provider) any())).thenReturn(token);
+        when(client.getParams()).thenReturn(params);
+        when(client.getGrant()).thenReturn(new ClientCredentialsGrant());
+
+        List healthcheck = new ArrayList();
+        healthcheck.add(testProvider);
+        healthcheck.add(client);
+
+        degradedProviderMap.put(testProvider.getID(), healthcheck);
+
+        Token result = instance.getBearerToken(client);
+        System.out.println(result.toString());
+        instance.stopHealthCheck();
+        assertEquals(token, result);
+
+    }
+
     @Test
     public void testGetBearerTokenError() throws AuthenticationException, IOException {
         Map params = new HashMap();
@@ -165,30 +322,26 @@ public class TokenManagerTest {
         params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
         params.put("provider_id", "local");
-        
-        
+
         TokenManager instance = new TokenManager();
         TokenCache cache = instance.getTokenCache();
         Map dummyResponse = new HashMap();
         dummyResponse.put("error", "Token returned is null");
-      
 
         Token token = new Token(null, null, null, "error_token", 0L, dummyResponse);
-                
-        
-        OAuthClient client =  mock(OAuthClient.class);
+
+        OAuthClient client = mock(OAuthClient.class);
 //        when(client.getToken((Provider) any())).thenThrow(new Exception("Some error occured"));
         when(client.getParams()).thenReturn(params);
         when(client.getGrant()).thenReturn(new ClientCredentialsGrant());
-        
+
         Token result = instance.getBearerToken(client);
         System.out.println(result.toString());
-       
+
         assertEquals(token, result);
-      
+
     }
-    
-    
+
     @Test
     public void testLoadCacheToken() throws NoSuchFieldException, IllegalAccessException, NoSuchMethodException, InvocationTargetException, AuthenticationException, IOException {
 
@@ -198,7 +351,12 @@ public class TokenManagerTest {
         TokenCache cache = instance.getTokenCache();
 
         //Setup reflection to test the private method
-        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
+        Class[] argTypes = new Class[]{OAuthClient.class,
+            Provider.class,
+            Map.class,
+            String.class
+
+        };
         final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
         loadCache.setAccessible(true);
 
@@ -206,7 +364,8 @@ public class TokenManagerTest {
         String key = "local|test_client_1|null|access_token";
 
         //Setup mock objects
-        OAuthClient mockOAuthClient = mock(OAuthClient.class);
+        OAuthClient mockOAuthClient = mock(OAuthClient.class
+        );
 
         Map dummyResponse = new HashMap();
         dummyResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
@@ -218,7 +377,8 @@ public class TokenManagerTest {
 
         when(mockOAuthClient.getToken((Provider) any())).thenReturn(token);
 
-        Provider mockProvider = mock(Provider.class);
+        Provider mockProvider = mock(Provider.class
+        );
 
         //Invoke method
         Object[] methodParams = new Object[]{mockOAuthClient, mockProvider, new HashMap(), key};
@@ -242,7 +402,12 @@ public class TokenManagerTest {
         TokenCache cache = instance.getTokenCache();
 
         //Setup reflection to test the private method
-        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
+        Class[] argTypes = new Class[]{OAuthClient.class,
+            Provider.class,
+            Map.class,
+            String.class
+
+        };
         final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
         loadCache.setAccessible(true);
 
@@ -250,7 +415,8 @@ public class TokenManagerTest {
         String key = "local|test_client_1|null|access_token";
 
         //Setup mock objects
-        OAuthClient mockOAuthClient = mock(OAuthClient.class);
+        OAuthClient mockOAuthClient = mock(OAuthClient.class
+        );
 
         Map dummyResponse = new HashMap();
         dummyResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
@@ -262,7 +428,8 @@ public class TokenManagerTest {
 
         when(mockOAuthClient.getToken((Provider) any())).thenReturn(null);
 
-        Provider mockProvider = mock(Provider.class);
+        Provider mockProvider = mock(Provider.class
+        );
 
         //Invoke method
         Object[] methodParams = new Object[]{mockOAuthClient, mockProvider, new HashMap(), key};
@@ -286,7 +453,12 @@ public class TokenManagerTest {
         TokenCache cache = instance.getTokenCache();
 
         //Setup reflection to test the private method
-        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
+        Class[] argTypes = new Class[]{OAuthClient.class,
+            Provider.class,
+            Map.class,
+            String.class
+
+        };
         final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
         loadCache.setAccessible(true);
 
@@ -294,7 +466,8 @@ public class TokenManagerTest {
         String key = "local|test_client_1|null|access_token";
 
         //Setup mock objects
-        OAuthClient mockOAuthClient = mock(OAuthClient.class);
+        OAuthClient mockOAuthClient = mock(OAuthClient.class
+        );
 
         Map dummyResponse = new HashMap();
         dummyResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
@@ -308,7 +481,8 @@ public class TokenManagerTest {
 
         when(mockOAuthClient.getToken((Provider) any())).thenReturn(token);
 
-        Provider mockProvider = mock(Provider.class);
+        Provider mockProvider = mock(Provider.class
+        );
 
         //Invoke method
         Object[] methodParams = new Object[]{mockOAuthClient, mockProvider, new HashMap(), key};
@@ -330,7 +504,12 @@ public class TokenManagerTest {
         TokenCache cache = instance.getTokenCache();
 
         //Setup reflection to test the private method
-        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
+        Class[] argTypes = new Class[]{OAuthClient.class,
+            Provider.class,
+            Map.class,
+            String.class
+
+        };
         final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
         loadCache.setAccessible(true);
 
@@ -339,7 +518,8 @@ public class TokenManagerTest {
         String refreshKey = "local|test_client_1|null|refresh_token";
 
         //Setup mock objects
-        OAuthClient mockOAuthClient = mock(OAuthClient.class);
+        OAuthClient mockOAuthClient = mock(OAuthClient.class
+        );
 
         Map dummyResponse = new HashMap();
         dummyResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
@@ -352,7 +532,8 @@ public class TokenManagerTest {
 
         when(mockOAuthClient.getToken((Provider) any())).thenReturn(token);
 
-        Provider mockProvider = mock(Provider.class);
+        Provider mockProvider = mock(Provider.class
+        );
 
         //Invoke method
         Map params = new HashMap();
@@ -378,7 +559,12 @@ public class TokenManagerTest {
         TokenCache cache = instance.getTokenCache();
 
         //Setup reflection to test the private method
-        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
+        Class[] argTypes = new Class[]{OAuthClient.class,
+            Provider.class,
+            Map.class,
+            String.class
+
+        };
         final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
         loadCache.setAccessible(true);
 
@@ -400,7 +586,8 @@ public class TokenManagerTest {
         System.out.println(cache.containsToken(refreshKey));
 
         //Setup mock objects
-        OAuthClient mockOAuthClient = mock(OAuthClient.class);
+        OAuthClient mockOAuthClient = mock(OAuthClient.class
+        );
 
         Map dummytokenResponse = new HashMap();
         dummytokenResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab34");
@@ -414,7 +601,8 @@ public class TokenManagerTest {
 //        when(mockOAuthClient.getToken((Provider) any())).thenReturn(token);
         when(mockOAuthClient.refreshToken((Provider) any(), (String) any())).thenReturn(token);
 
-        Provider mockProvider = mock(Provider.class);
+        Provider mockProvider = mock(Provider.class
+        );
 
         //Invoke method
         Map params = new HashMap();
@@ -440,7 +628,12 @@ public class TokenManagerTest {
         TokenCache cache = instance.getTokenCache();
 
         //Setup reflection to test the private method
-        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
+        Class[] argTypes = new Class[]{OAuthClient.class,
+            Provider.class,
+            Map.class,
+            String.class
+
+        };
         final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
         loadCache.setAccessible(true);
 
@@ -462,7 +655,8 @@ public class TokenManagerTest {
         System.out.println(cache.containsToken(refreshKey));
 
         //Setup mock objects
-        OAuthClient mockOAuthClient = mock(OAuthClient.class);
+        OAuthClient mockOAuthClient = mock(OAuthClient.class
+        );
 
         Map dummytokenResponse = new HashMap();
         dummytokenResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab34");
@@ -476,7 +670,8 @@ public class TokenManagerTest {
 //        when(mockOAuthClient.getToken((Provider) any())).thenReturn(token);
         when(mockOAuthClient.refreshToken((Provider) any(), (String) any())).thenReturn(null);
 
-        Provider mockProvider = mock(Provider.class);
+        Provider mockProvider = mock(Provider.class
+        );
 
         //Invoke method
         Map params = new HashMap();
@@ -503,7 +698,12 @@ public class TokenManagerTest {
         TokenCache cache = instance.getTokenCache();
 
         //Setup reflection to test the private method
-        Class[] argTypes = new Class[]{OAuthClient.class, Provider.class, Map.class, String.class};
+        Class[] argTypes = new Class[]{OAuthClient.class,
+            Provider.class,
+            Map.class,
+            String.class
+
+        };
         final Method loadCache = instance.getClass().getDeclaredMethod("loadCache", argTypes);
         loadCache.setAccessible(true);
 
@@ -525,7 +725,8 @@ public class TokenManagerTest {
         System.out.println(cache.containsToken(refreshKey));
 
         //Setup mock objects
-        OAuthClient mockOAuthClient = mock(OAuthClient.class);
+        OAuthClient mockOAuthClient = mock(OAuthClient.class
+        );
 
         Map dummytokenResponse = new HashMap();
         dummytokenResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab34");
@@ -539,7 +740,8 @@ public class TokenManagerTest {
 //        when(mockOAuthClient.getToken((Provider) any())).thenReturn(token);
         when(mockOAuthClient.refreshToken((Provider) any(), (String) any())).thenReturn(token);
 
-        Provider mockProvider = mock(Provider.class);
+        Provider mockProvider = mock(Provider.class
+        );
 
         //Invoke method
         Map params = new HashMap();

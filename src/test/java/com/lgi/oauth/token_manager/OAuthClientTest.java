@@ -6,6 +6,8 @@
 package com.lgi.oauth.token_manager;
 
 import java.lang.reflect.Field;
+import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -114,7 +116,6 @@ public class OAuthClientTest {
         params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
         params.put("grant_type", "client_credentials");
         params.put("client_id", "test_client_1");
-        params.put("provider_id", "local");
         params.put("client_secret", "test_secret");
         params.put("basic_username", "test_client_1");
         params.put("basic_password", "test_secret");
@@ -129,8 +130,12 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new ClientCredentialsGrant());
+         byte[] bytesOfMessage = "http://localhost:8080/v1/oauth/tokens".getBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String providerID = new BigInteger(1, md.digest(bytesOfMessage)).toString(16);
+        when(provider.getID()).thenReturn(providerID);
 
-        Token expResult = new Token("test_client_1", "local", null, "access_token", 3600L, dummyResponse);
+        Token expResult = new Token("test_client_1", providerID, null, "access_token", 3600L, dummyResponse);
 
         Token result = instance.getToken(provider);
 
@@ -155,7 +160,6 @@ public class OAuthClientTest {
         params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
         params.put("grant_type", "client_credentials");
         params.put("client_id", "test_client_1");
-        params.put("provider_id", "local");
         params.put("client_secret", "test_secret");
         // params.put("basic_username", "test_client_1");
         // params.put("basic_password", "test_secret");
@@ -170,8 +174,12 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new ClientCredentialsGrant());
+         byte[] bytesOfMessage = "http://localhost:8080/v1/oauth/tokens".getBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String providerID = new BigInteger(1, md.digest(bytesOfMessage)).toString(16);
+        when(provider.getID()).thenReturn(providerID);
 
-        Token expResult = new Token("test_client_1", "local", null, "access_token", 3600L, dummyResponse);
+        Token expResult = new Token("test_client_1", providerID, null, "access_token", 3600L, dummyResponse);
 
         Token result = instance.getToken(provider);
 
@@ -215,8 +223,13 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new ClientCredentialsGrant());
+         byte[] bytesOfMessage = "http://localhost:8080/v1/oauth/tokens".getBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String providerID = new BigInteger(1, md.digest(bytesOfMessage)).toString(16);
+        when(provider.getID()).thenReturn(providerID);
 
-        Token expResult = new Token("test_client_1", "local", "read_write", "access_token", 3600L, dummyResponse);
+        Token expResult = new Token("test_client_1", providerID, "read_write", "access_token", 3600L, dummyResponse);
+        
 
         Token result = instance.getToken(provider);
 
@@ -245,7 +258,6 @@ public class OAuthClientTest {
         params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
         params.put("grant_type", "client_credentials");
         params.put("client_id", "test_client_1");
-        params.put("provider_id", "local");
         params.put("client_secret", "test_secret");
         params.put("basic_username", "test_client_1");
         params.put("basic_password", "test_secret");
@@ -257,8 +269,12 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new ClientCredentialsGrant());
+         byte[] bytesOfMessage = "http://localhost:8080/v1/oauth/tokens".getBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String providerID = new BigInteger(1, md.digest(bytesOfMessage)).toString(16);
+        when(provider.getID()).thenReturn(providerID);
 
-        Token expResult = new Token("test_client_1", "local", null, "error_token", 0, dummyResponse);
+        Token expResult = new Token("test_client_1", providerID, null, "error_token", 0, dummyResponse);
 
         Token result = instance.getToken(provider);
 
@@ -324,7 +340,6 @@ public class OAuthClientTest {
         params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
         params.put("grant_type", "client_credentials");
         params.put("client_id", "test_client_1");
-        params.put("provider_id", "local");
         params.put("client_secret", "test_secret");
         params.put("basic_username", "test_client_1");
         params.put("basic_password", "test_secret");
@@ -340,8 +355,12 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new ClientCredentialsGrant());
+         byte[] bytesOfMessage = "http://localhost:8080/v1/oauth/tokens".getBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String providerID = new BigInteger(1, md.digest(bytesOfMessage)).toString(16);
+        when(provider.getID()).thenReturn(providerID);
 
-        Token expResult = new Token("test_client_1", "local", null, "access_token", 4000, dummyResponse);
+        Token expResult = new Token("test_client_1", providerID, null, "access_token", 4000, dummyResponse);
 
         Token result = instance.getToken(provider);
 
@@ -366,7 +385,6 @@ public class OAuthClientTest {
         params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
         params.put("grant_type", "password");
         params.put("client_id", "test_client_1");
-        params.put("provider_id", "local");
         params.put("basic_username", "test_client_1");
         params.put("basic_password", "test_secret");
         params.put("username", "test_user");
@@ -384,8 +402,12 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new PasswordGrant());
+         byte[] bytesOfMessage = "http://localhost:8080/v1/oauth/tokens".getBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String providerID = new BigInteger(1, md.digest(bytesOfMessage)).toString(16);
+        when(provider.getID()).thenReturn(providerID);
 
-        Token expResult = new Token("test_client_1", "local", null, "access_token", 3600L, dummyResponse);
+        Token expResult = new Token("test_client_1", providerID, null, "access_token", 3600L, dummyResponse);
 
         Token result = instance.getToken(provider);
 
@@ -414,7 +436,6 @@ public class OAuthClientTest {
         params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
         params.put("grant_type", "password");
         params.put("client_id", "test_client_1");
-        params.put("provider_id", "local");
         params.put("basic_username", "test_client_1");
         params.put("basic_password", "test_secret");
         params.put("username", "test_user");
@@ -432,8 +453,12 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new PasswordGrant());
+         byte[] bytesOfMessage = "http://localhost:8080/v1/oauth/tokens".getBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String providerID = new BigInteger(1, md.digest(bytesOfMessage)).toString(16);
+        when(provider.getID()).thenReturn(providerID);
 
-        Token expResult = new Token("test_client_1", "local", null, "access_token", 3600L, dummyResponse);
+        Token expResult = new Token("test_client_1", providerID, null, "access_token", 3600L, dummyResponse);
 
         Token result = instance.refreshToken(provider, refreshToken);
 
@@ -463,9 +488,6 @@ public class OAuthClientTest {
         params.put("grant_type", "password");
         params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
-        params.put("provider_id", "local");
-//        params.put("basic_username", "test_client_1");
-//        params.put("basic_password", "test_secret");
         params.put("username", "test_user");
         params.put("password", "test_password");
 
@@ -481,8 +503,12 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new PasswordGrant());
+         byte[] bytesOfMessage = "http://localhost:8080/v1/oauth/tokens".getBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String providerID = new BigInteger(1, md.digest(bytesOfMessage)).toString(16);
+        when(provider.getID()).thenReturn(providerID);
 
-        Token expResult = new Token("test_client_1", "local", null, "access_token", 3600L, dummyResponse);
+        Token expResult = new Token("test_client_1", providerID, null, "access_token", 3600L, dummyResponse);
 
         Token result = instance.refreshToken(provider, refreshToken);
 
@@ -516,7 +542,6 @@ public class OAuthClientTest {
         params.put("grant_type", "password");
         params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
-        params.put("provider_id", "local");
         params.put("username", "test_user");
         params.put("password", "test_password");
 
@@ -527,8 +552,12 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new PasswordGrant());
+         byte[] bytesOfMessage = "http://localhost:8080/v1/oauth/tokens".getBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String providerID = new BigInteger(1, md.digest(bytesOfMessage)).toString(16);
+        when(provider.getID()).thenReturn(providerID);
 
-        Token expResult = new Token("test_client_1", "local", null, "error_token", 0L, dummyResponse);
+        Token expResult = new Token("test_client_1", providerID, null, "error_token", 0L, dummyResponse);
 
         Token result = instance.refreshToken(provider, refreshToken);
 
@@ -563,7 +592,6 @@ public class OAuthClientTest {
         params.put("grant_type", "password");
         params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
-        params.put("provider_id", "local");
         params.put("username", "test_user");
         params.put("password", "test_password");
         params.put("scope", "test_scope");
@@ -580,8 +608,12 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new PasswordGrant());
+         byte[] bytesOfMessage = "http://localhost:8080/v1/oauth/tokens".getBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String providerID = new BigInteger(1, md.digest(bytesOfMessage)).toString(16);
+        when(provider.getID()).thenReturn(providerID);
 
-        Token expResult = new Token("test_client_1", "local", "test_scope", "access_token", 3600L, dummyResponse);
+        Token expResult = new Token("test_client_1", providerID, "test_scope", "access_token", 3600L, dummyResponse);
 
         Token result = instance.refreshToken(provider, refreshToken);
 
@@ -616,7 +648,6 @@ public class OAuthClientTest {
         params.put("grant_type", "password");
         params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
-        params.put("provider_id", "local");
         params.put("username", "test_user");
         params.put("password", "test_password");
         params.put("scope", "test_scope");
@@ -632,8 +663,6 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new PasswordGrant());
-
-        Token expResult = new Token("test_client_1", "local", "test_scope", "access_token", 3600L, dummyResponse);
 
         Token result = instance.refreshToken(provider, refreshToken);
 
@@ -651,17 +680,17 @@ public class OAuthClientTest {
         params.put("grant_type", "password");
         params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
-        params.put("provider_id", "local");
         params.put("username", "test_user");
         params.put("password", "test_password");
         params.put("scope", "test_scope");
         params.put("access_token_ttl", "3600");
 
         Provider provider = mock(Provider.class);
+        
+        
         Map dummyResponse = new HashMap();
         dummyResponse.put("user_id", "2");
         dummyResponse.put("access_token", "a4cf9dee-3ea4-412f-af63-f2bac6faab33");
-//        dummyResponse.put("expires_in", "3600");
         dummyResponse.put("token_type", "Bearer");
         dummyResponse.put("scope", "test_scope");
         dummyResponse.put("refresh_token", "bc3cb409-2aea-4707-b953-9d6e287d9120");
@@ -669,10 +698,16 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new PasswordGrant());
+        byte[] bytesOfMessage = "http://localhost:8080/v1/oauth/tokens".getBytes();
+        MessageDigest md = MessageDigest.getInstance("MD5");
+        String providerID = new BigInteger(1, md.digest(bytesOfMessage)).toString(16);
+        when(provider.getID()).thenReturn(providerID);
 
-        Token expResult = new Token("test_client_1", "local", "test_scope", "access_token", 3600L, dummyResponse);
+        Token expResult = new Token("test_client_1", providerID, "test_scope", "access_token", 3600L, dummyResponse);
 
         Token result = instance.refreshToken(provider, refreshToken);
+        
+        System.out.println(result.toString());
 
         // Verify request to provider
         List<NameValuePair> headers = new ArrayList<NameValuePair>();
@@ -706,11 +741,6 @@ public class OAuthClientTest {
         params.put("grant_type", "client_credentials");
         params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
-        params.put("provider_id", "local");
-//        params.put("username", "test_user");
-//        params.put("password", "test_password");
-//        params.put("scope", "test_scope");
-//        params.put("access_token_ttl", "3600");
 
         Provider provider = mock(Provider.class);
         Map dummyResponse = new HashMap();
@@ -724,8 +754,6 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new ClientCredentialsGrant());
-
-        Token expResult = new Token("test_client_1", "local", "test_scope", "access_token", 3600L, dummyResponse);
 
         Token result = instance.refreshToken(provider, refreshToken);
 
@@ -742,12 +770,7 @@ public class OAuthClientTest {
         params.put("grant_type", "client_credentials");
         params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
-        params.put("provider_id", "local");
-//        params.put("username", "test_user");
-//        params.put("password", "test_password");
-//        params.put("scope", "test_scope");
-//        params.put("access_token_ttl", "3600");
-
+       
         Provider provider = mock(Provider.class);
         Map dummyResponse = new HashMap();
         dummyResponse.put("user_id", "2");
@@ -760,8 +783,6 @@ public class OAuthClientTest {
         when(provider.getResponse((List<NameValuePair>) (List<?>) anyList(), (List<NameValuePair>) (List<?>) anyList(), (UsernamePasswordCredentials) any())).thenReturn(dummyResponse);
 
         OAuthClient instance = new OAuthClient(params, new PasswordGrant());
-
-        Token expResult = new Token("test_client_1", "local", "test_scope", "access_token", 3600L, dummyResponse);
 
         Token result = instance.refreshToken(provider, refreshToken);
 
@@ -778,8 +799,6 @@ public class OAuthClientTest {
         params.put("grant_type", "client_credentials");
         params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
-        params.put("provider_id", "local");
-
 
         Provider provider = mock(Provider.class);
         Map dummyResponse = new HashMap();
@@ -797,7 +816,6 @@ public class OAuthClientTest {
         
         OAuthClient instance = new OAuthClient(params, testGrant);
 
-        Token expResult = new Token("test_client_1", "local", "test_scope", "access_token", 3600L, dummyResponse);
 
         Token result = instance.refreshToken(provider, refreshToken);
 
@@ -807,14 +825,11 @@ public class OAuthClientTest {
     @Test(expected = UnsupportedOperationException.class)
     public void testGetTokeUnsupportedGrant() throws Exception {
 
-        String refreshToken = "bc3cb409-2aea-4707-b953-9d6e287d9118";
-
         Map params = new HashMap();
         params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
         params.put("grant_type", "client_credentials");
         params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
-        params.put("provider_id", "local");
 
 
         Provider provider = mock(Provider.class);
@@ -832,8 +847,6 @@ public class OAuthClientTest {
         when(testGrant.getType()).thenReturn("testGrant");
         
         OAuthClient instance = new OAuthClient(params, testGrant);
-
-        Token expResult = new Token("test_client_1", "local", "test_scope", "access_token", 3600L, dummyResponse);
 
         Token result = instance.getToken(provider);
 
@@ -848,7 +861,6 @@ public class OAuthClientTest {
         params.put("grant_type", "client_credentials");
         params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
-        params.put("provider_id", "local");
 
 
         Provider provider = mock(Provider.class);
@@ -866,7 +878,6 @@ public class OAuthClientTest {
         
         OAuthClient instance = new OAuthClient(params, testGrant);
 
-        Token expResult = new Token("test_client_1", "local", "test_scope", "access_token", 3600L, dummyResponse);
 
         Token result = instance.getToken(provider);
 
@@ -879,9 +890,8 @@ public class OAuthClientTest {
         Map params = new HashMap();
         params.put("provider_url", "http://localhost:8080/v1/oauth/tokens");
         params.put("grant_type", "client_credentials");
-//        params.put("client_id", "test_client_1");
         params.put("client_secret", "test_secret");
-        params.put("provider_id", "local");
+
 
 
         Provider provider = mock(Provider.class);
@@ -896,7 +906,6 @@ public class OAuthClientTest {
         
         OAuthClient instance = new OAuthClient(params, new ClientCredentialsGrant());
 
-        Token expResult = new Token("test_client_1", "local", "test_scope", "access_token", 3600L, dummyResponse);
 
         Token result = instance.getToken(provider);
 
