@@ -244,6 +244,10 @@ public class TokenManager {
                             sem.release();
                             logger.log(Level.SEVERE, "Timeout occured requesting token from provider {0}. Added to list of degraded providers.", provider.getID());
                             return errorToken("Timeout occured requesting token from provider");
+                        } catch (Exception e) {
+                            sem.release();
+                            logger.log(Level.SEVERE, "Unknown Error happened while trying to load the cache.", provider.getID());
+                            return errorToken(e.getMessage());
                         }
 
                     } else {
