@@ -26,6 +26,7 @@ import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthenticationException;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
@@ -96,6 +97,7 @@ public class Provider {
     public Map getResponse(List<NameValuePair> headers, List<NameValuePair> urlParameters, UsernamePasswordCredentials credentials) throws AuthenticationException, IOException, UnknownHostException, SocketTimeoutException {
         // Create HTTP client
         RequestConfig config = RequestConfig.custom()
+                .setCookieSpec(CookieSpecs.IGNORE_COOKIES)
                 .setConnectTimeout(connectTimeoutMS)
                 .setSocketTimeout(socketTimeoutMS).build();
 

@@ -13,6 +13,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.http.NameValuePair;
@@ -59,7 +60,7 @@ public class OAuthClient {
         List<NameValuePair> headers = new ArrayList<NameValuePair>();
         List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
 
-        logger.log(Level.FINEST, "Received the following parameters {0}", params.toString());
+        logger.log(Level.INFO, "Received the following parameters {0}", params.toString());
 
         //Set minimum grant parameters
         for (String param : grant.getMinimumGrantParameters()) {
@@ -80,7 +81,17 @@ public class OAuthClient {
         if (params.containsKey("scope")) {
             urlParameters.add(new BasicNameValuePair("scope", (String) params.get("scope")));
         }
+        
+        //check for custom parameters to set
+        for(Object key : params.keySet()){
+            
+            String stringKey = (String)key;
+            if(stringKey.startsWith("custom_")){
+                urlParameters.add(new BasicNameValuePair(stringKey.split("custom_")[1], (String) params.get(stringKey)));
+            }
+        }
 
+        logger.log(Level.INFO, "Sending the following parameters {0}", urlParameters.toString());
         // Call provider to get token
         Map providerResponse = provider.getResponse(headers, urlParameters, credentials);
 

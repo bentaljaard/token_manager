@@ -247,6 +247,7 @@ public class TokenManager {
                         } catch (Exception e) {
                             sem.release();
                             logger.log(Level.SEVERE, "Unknown Error happened while trying to load the cache.", provider.getID());
+                            e.printStackTrace();
                             return errorToken(e.getMessage());
                         }
 
